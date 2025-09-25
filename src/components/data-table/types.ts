@@ -4,12 +4,6 @@ export type SearchParams = {
   [key: string]: string | string[] | undefined;
 };
 
-export type DatePreset = {
-  label: string;
-  from: Date;
-  to: Date;
-  shortcut: string;
-};
 
 // TODO: we could type the value(!) especially when using enums
 export type Option = {
@@ -36,11 +30,6 @@ export type Slider = {
   options?: Option[];
 };
 
-export type Timerange = {
-  type: "timerange";
-  options?: Option[]; // required for TS
-  presets?: DatePreset[];
-};
 
 export type Base<TData> = {
   label: string;
@@ -58,13 +47,11 @@ export type Base<TData> = {
 export type DataTableCheckboxFilterField<TData> = Base<TData> & Checkbox;
 export type DataTableSliderFilterField<TData> = Base<TData> & Slider;
 export type DataTableInputFilterField<TData> = Base<TData> & Input;
-export type DataTableTimerangeFilterField<TData> = Base<TData> & Timerange;
 
 export type DataTableFilterField<TData> =
   | DataTableCheckboxFilterField<TData>
   | DataTableSliderFilterField<TData>
-  | DataTableInputFilterField<TData>
-  | DataTableTimerangeFilterField<TData>;
+  | DataTableInputFilterField<TData>;
 
 /** ----------------------------------------- */
 
@@ -74,7 +61,7 @@ export type SheetField<TData, TMeta = Record<string, unknown>> = {
   // FIXME: rethink that! I dont think we need this as there is no input type
   // REMINDER: readonly if we only want to copy the value (e.g. uuid)
   // TODO: we might have some values that are not in the data but can be computed
-  type: "readonly" | "input" | "checkbox" | "slider" | "timerange";
+  type: "readonly" | "input" | "checkbox" | "slider";
   component?: (
     // REMINDER: this is used to pass additional data like the `InfiniteQueryMeta`
     props: TData & {

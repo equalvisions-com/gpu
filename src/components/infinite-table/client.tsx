@@ -28,10 +28,14 @@ export function Client() {
   } = useInfiniteQuery(dataOptions(search));
   useResetFocus();
 
-  const flatData = React.useMemo(
-    () => data?.pages?.flatMap((page) => page.data ?? []) ?? [],
-    [data?.pages],
-  );
+  const flatData = React.useMemo(() => {
+    const allData = data?.pages?.flatMap((page) => page.data ?? []) ?? [];
+    // Remove duplicates based on UUID to prevent React key conflicts
+    const uniqueData = allData.filter(
+      (item, index, self) => self.findIndex((i) => i.uuid === item.uuid) === index
+    );
+    return uniqueData;
+  }, [data?.pages]);
 
   const liveMode = useLiveMode(flatData);
 
@@ -40,7 +44,6 @@ export function Client() {
   const totalDBRowCount = lastPage?.meta?.totalRowCount;
   const filterDBRowCount = lastPage?.meta?.filterRowCount;
   const metadata = lastPage?.meta?.metadata;
-  const chartData = lastPage?.meta?.chartData;
   const facets = lastPage?.meta?.facets;
   const totalFetched = flatData?.length;
 
@@ -109,8 +112,6 @@ export function Client() {
       hasNextPage={hasNextPage}
       fetchPreviousPage={fetchPreviousPage}
       refetch={refetch}
-      chartData={chartData}
-      chartDataColumnId="date"
       getRowClassName={(row) => {
         const rowTimestamp = row.original.date.getTime();
         const isPast = rowTimestamp <= (liveMode.timestamp || -1);

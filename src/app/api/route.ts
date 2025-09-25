@@ -2,19 +2,18 @@ import { calculateSpecificPercentile } from "@/lib/request/percentile";
 import { addDays } from "date-fns";
 import { NextRequest } from "next/server";
 import SuperJSON from "superjson";
-import type { InfiniteQueryResponse, LogsMeta } from "../query-options";
-import type { ColumnSchema } from "../schema";
-import { searchParamsCache } from "../search-params";
+import type { InfiniteQueryResponse, LogsMeta } from "@/components/infinite-table/query-options";
+import type { ColumnSchema } from "@/components/infinite-table/schema";
+import { searchParamsCache } from "@/components/infinite-table/search-params";
 import {
   filterData,
   getFacetsFromData,
-  groupChartData,
   percentileData,
   sliderFilterValues,
   sortData,
   splitData,
-} from "./helpers";
-import { mock, mockLive } from "./mock";
+} from "@/components/infinite-table/api/helpers";
+import { mock, mockLive } from "@/components/infinite-table/api/mock";
 
 export const dynamic = "force-dynamic";
 
@@ -42,7 +41,6 @@ export async function GET(req: NextRequest): Promise<Response> {
   const withoutSliderData = filterData(rangedData, { ..._rest, date: null });
 
   const filteredData = filterData(withoutSliderData, { ...search, date: null });
-  const chartData = groupChartData(filteredData, _date); // TODO: rangedData or filterData // REMINDER: avoid sorting the chartData
   const sortedData = sortData(filteredData, search.sort);
   const withoutSliderFacets = getFacetsFromData(withoutSliderData);
   const facets = getFacetsFromData(filteredData);
@@ -69,7 +67,6 @@ export async function GET(req: NextRequest): Promise<Response> {
       meta: {
         totalRowCount: totalData.length,
         filterRowCount: filteredData.length,
-        chartData,
         // REMINDER: we separate the slider for keeping the min/max facets of the slider fields
         facets: {
           ...withoutSliderFacets,

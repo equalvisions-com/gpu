@@ -2,7 +2,6 @@ import type { Percentile } from "@/lib/request/percentile";
 import { infiniteQueryOptions, keepPreviousData } from "@tanstack/react-query";
 import SuperJSON from "superjson";
 import type {
-  BaseChartSchema,
   ColumnSchema,
   FacetMetadataSchema,
 } from "./schema";
@@ -15,7 +14,6 @@ export type LogsMeta = {
 export type InfiniteQueryMeta<TMeta = Record<string, unknown>> = {
   totalRowCount: number;
   filterRowCount: number;
-  chartData: BaseChartSchema[];
   facets: Record<string, FacetMetadataSchema>;
   metadata?: TMeta;
 };
@@ -43,7 +41,7 @@ export const dataOptions = (search: SearchParamsType) => {
         uuid: null,
         live: null,
       });
-      const response = await fetch(`/infinite/api${serialize}`);
+      const response = await fetch(`/api${serialize}`);
       const json = await response.json();
       return SuperJSON.parse<InfiniteQueryResponse<ColumnSchema[], LogsMeta>>(
         json,

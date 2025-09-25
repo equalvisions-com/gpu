@@ -11,7 +11,6 @@ import { DataTableFilterResetButton } from "./data-table-filter-reset-button";
 import { DataTableFilterCheckbox } from "./data-table-filter-checkbox";
 import { DataTableFilterSlider } from "./data-table-filter-slider";
 import { DataTableFilterInput } from "./data-table-filter-input";
-import { DataTableFilterTimerange } from "./data-table-filter-timerange";
 import { useDataTable } from "@/components/data-table/data-table-provider";
 
 // FIXME: use @container (especially for the slider element) to restructure elements
@@ -60,9 +59,6 @@ export function DataTableFilterControls() {
                     }
                     case "input": {
                       return <DataTableFilterInput {...field} />;
-                    }
-                    case "timerange": {
-                      return <DataTableFilterTimerange {...field} />;
                     }
                   }
                 })()}

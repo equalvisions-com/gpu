@@ -22,8 +22,10 @@ import type {
 import { Button } from "@/components/ui/button";
 import { useHotKey } from "@/hooks/use-hot-key";
 import { useLocalStorage } from "@/hooks/use-local-storage";
+import { useControls } from "@/providers/controls";
+import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { formatCompactNumber } from "@/lib/format";
-import { arrSome, inDateRange } from "@/lib/table/filterfns";
+import { arrSome } from "@/lib/table/filterfns";
 import { cn } from "@/lib/utils";
 import {
   FetchPreviousPageOptions,
@@ -56,9 +58,30 @@ import * as React from "react";
 import { LiveButton } from "./_components/live-button";
 import { RefreshButton } from "./_components/refresh-button";
 import { SocialsFooter } from "./_components/socials-footer";
-import { BaseChartSchema } from "./schema";
 import { searchParamsParser } from "./search-params";
-import { TimelineChart } from "./timeline-chart";
+
+// Floating Controls Button Component
+function FloatingControlsButton() {
+  const { open, setOpen } = useControls();
+
+  useHotKey(() => setOpen((prev) => !prev), "b");
+
+  return (
+    <Button
+      size="sm"
+      variant="default"
+      onClick={() => setOpen((prev) => !prev)}
+      className="fixed bottom-6 left-6 z-50 h-12 w-12 rounded-full shadow-lg transition-all duration-300 hover:scale-105"
+      aria-label={open ? "Hide controls" : "Show controls"}
+    >
+      {open ? (
+        <PanelLeftClose className="h-5 w-5" />
+      ) : (
+        <PanelLeftOpen className="h-5 w-5" />
+      )}
+    </Button>
+  );
+}
 
 // TODO: add a possible chartGroupBy
 export interface DataTableInfiniteProps<TData, TValue, TMeta> {
@@ -86,8 +109,6 @@ export interface DataTableInfiniteProps<TData, TValue, TMeta> {
   filterRows?: number;
   totalRowsFetched?: number;
   meta: TMeta;
-  chartData?: BaseChartSchema[];
-  chartDataColumnId: string;
   isFetching?: boolean;
   isLoading?: boolean;
   hasNextPage?: boolean;
@@ -100,8 +121,6 @@ export interface DataTableInfiniteProps<TData, TValue, TMeta> {
   refetch: (options?: RefetchOptions | undefined) => void;
   renderLiveRow?: (props?: { row: Row<TData> }) => React.ReactNode;
   renderSheetTitle: (props: { row?: Row<TData> }) => React.ReactNode;
-  // TODO:
-  renderChart?: () => React.ReactNode;
   searchParamsParser: Record<string, ParserBuilder<any>>;
 }
 
@@ -125,8 +144,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   totalRows = 0,
   filterRows = 0,
   totalRowsFetched = 0,
-  chartData = [],
-  chartDataColumnId,
   getFacetedUniqueValues,
   getFacetedMinMaxValues,
   meta,
@@ -207,7 +224,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getTTableFacetedUniqueValues(),
     getFacetedMinMaxValues: getTTableFacetedMinMaxValues(),
-    filterFns: { inDateRange, arrSome },
+    filterFns: { arrSome },
     debugAll: process.env.NEXT_PUBLIC_TABLE_DEBUG === "true",
     meta: { getRowClassName },
   });
@@ -320,14 +337,20 @@ export function DataTableInfinite<TData, TValue, TMeta>({
           )}
         >
           <div className="border-b border-border bg-background p-2 md:sticky md:top-0">
-            <div className="flex h-[46px] items-center justify-between gap-3">
-              <p className="px-2 font-medium text-foreground">Filters</p>
-              <div>
-                {table.getState().columnFilters.length ? (
-                  <DataTableResetButton />
-                ) : null}
-              </div>
-            </div>
+            <DataTableToolbar
+              renderActions={() => [
+                <RefreshButton key="refresh" onClick={refetch} />,
+                fetchPreviousPage ? (
+                  <LiveButton
+                    key="live"
+                    fetchPreviousPage={fetchPreviousPage}
+                  />
+                ) : null,
+              ]}
+            />
+          </div>
+          <div className="p-2">
+            <DataTableFilterCommand searchParamsParser={searchParamsParser} />
           </div>
           <div className="flex-1 p-2 sm:overflow-y-scroll">
             <DataTableFilterControls />
@@ -346,29 +369,10 @@ export function DataTableInfinite<TData, TValue, TMeta>({
           <div
             ref={topBarRef}
             className={cn(
-              "flex flex-col gap-4 bg-background p-2",
-              "sticky top-0 z-10 pb-4",
+              "flex flex-col",
+              "sticky top-0 z-10",
             )}
           >
-            <DataTableFilterCommand searchParamsParser={searchParamsParser} />
-            {/* TBD: better flexibility with compound components? */}
-            <DataTableToolbar
-              renderActions={() => [
-                <RefreshButton key="refresh" onClick={refetch} />,
-                fetchPreviousPage ? (
-                  <LiveButton
-                    key="live"
-                    fetchPreviousPage={fetchPreviousPage}
-                  />
-                ) : null,
-              ]}
-            />
-            {/* TODO: move up to client component */}
-            <TimelineChart
-              data={chartData}
-              className="-mb-2"
-              columnId={chartDataColumnId}
-            />
           </div>
           <div className="z-0">
             <Table
@@ -514,6 +518,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
           }}
         />
       </DataTableSheetDetails>
+      <FloatingControlsButton />
     </DataTableProvider>
   );
 }

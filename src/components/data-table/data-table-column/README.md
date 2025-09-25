@@ -12,7 +12,7 @@ Usage Example:
 ```tsx
 "use client";
 
-import { DataTableColumnLevelIndicator } from "@/components/data-table/data-table-column/data-table-column-level-indicator";
+import { DataTableColumnCompanyLogo } from "@/components/data-table/data-table-column/data-table-column-company-logo";
 import type { ColumnDef } from "@tanstack/react-table";
 
 export type ColumnSchema = {

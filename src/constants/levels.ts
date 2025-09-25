@@ -1,4 +1,4 @@
-export const LEVELS = ["success", "warning", "error"] as const;
+export const LEVELS = ["verified", "featured", "premium"] as const;
 
 // FIXME: improve
-export const _LEVELS = [...LEVELS, "info"] as const;
+export const _LEVELS = [...LEVELS, "basic"] as const;
