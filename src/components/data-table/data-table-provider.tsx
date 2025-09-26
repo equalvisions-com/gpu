@@ -85,7 +85,7 @@ export function DataTableProvider<TData, TValue>({
 
   return (
     <DataTableContext.Provider value={value}>
-      <ControlsProvider>{children}</ControlsProvider>
+      {children}
     </DataTableContext.Provider>
   );
 }

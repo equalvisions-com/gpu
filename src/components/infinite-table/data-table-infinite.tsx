@@ -64,13 +64,13 @@ import { searchParamsParser } from "./search-params";
 function FloatingControlsButton() {
   const { open, setOpen } = useControls();
 
-  useHotKey(() => setOpen((prev) => !prev), "b");
+  useHotKey(() => setOpen((prev) => prev !== null ? !prev : false), "b");
 
   return (
     <Button
       size="sm"
       variant="default"
-      onClick={() => setOpen((prev) => !prev)}
+      onClick={() => setOpen((prev) => prev !== null ? !prev : false)}
       className="fixed bottom-6 left-6 z-50 h-12 w-12 rounded-full shadow-lg transition-all duration-300 hover:scale-105"
       aria-label={open ? "Hide controls" : "Show controls"}
     >
@@ -332,8 +332,11 @@ export function DataTableInfinite<TData, TValue, TMeta>({
         <div
           className={cn(
             "h-full w-full flex-col sm:sticky sm:top-0 sm:max-h-screen sm:min-h-screen sm:min-w-52 sm:max-w-52 sm:self-start md:min-w-72 md:max-w-72",
-            "group-data-[expanded=false]/controls:hidden",
+            // CSS responsive defaults: hidden on mobile, visible on desktop
             "hidden sm:flex",
+            "group-data-[expanded=false]/controls:hidden",
+            // Mobile: fixed overlay that takes full screen
+            "fixed inset-0 z-40 bg-background overflow-y-auto sm:static sm:z-auto sm:overflow-y-visible",
           )}
         >
           <div className="border-b border-border bg-background p-2 md:sticky md:top-0">
@@ -380,7 +383,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
               onScroll={onScroll}
               // REMINDER: https://stackoverflow.com/questions/50361698/border-style-do-not-work-with-sticky-position-element
               className="border-separate border-spacing-0"
-              containerClassName="max-h-[calc(100vh_-_var(--top-bar-height))]"
+              containerClassName="h-full max-h-[calc(100vh_-_var(--top-bar-height))] scrollbar-hide"
             >
               <TableHeader className={cn("sticky top-0 z-20 bg-background")}>
                 {table.getHeaderGroups().map((headerGroup) => (

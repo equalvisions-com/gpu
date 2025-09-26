@@ -14,7 +14,8 @@ interface DataTableToolbarProps {
 
 export function DataTableToolbar({ renderActions }: DataTableToolbarProps) {
   const { table, isLoading, columnFilters } = useDataTable();
-  const { open } = useControls();
+  // Note: open is not used in this component, but we destructure it to avoid linting issues
+  const { open: _open } = useControls();
   const filters = table.getState().columnFilters;
 
   const rows = useMemo(

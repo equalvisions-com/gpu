@@ -10,6 +10,10 @@ const Table = React.forwardRef<HTMLTableElement, TableProps>(
   ({ className, containerClassName, onScroll, ...props }, ref) => (
     <div
       className={cn("w-full overflow-auto", containerClassName)}
+      style={{
+        // Prevent overscroll bounce on horizontal axis to make scrolling feel more restrictive
+        overscrollBehaviorX: 'contain'
+      }}
       // REMINDER: we are not scrolling the table, but the container
       {...{ onScroll }}
     >

@@ -1,5 +1,6 @@
 "use client";
 
+import { ControlsProvider } from "@/providers/controls";
 import { useHotKey } from "@/hooks/use-hot-key";
 import { getLevelRowClassName } from "@/lib/request/level";
 import { cn } from "@/lib/utils";
@@ -80,7 +81,8 @@ export function Client() {
   }, [facets]);
 
   return (
-    <DataTableInfinite
+    <ControlsProvider>
+      <DataTableInfinite
       columns={columns}
       data={flatData}
       totalRows={totalDBRowCount}
@@ -129,6 +131,7 @@ export function Client() {
       renderSheetTitle={(props) => props.row?.original.pathname}
       searchParamsParser={searchParamsParser}
     />
+    </ControlsProvider>
   );
 }
 
