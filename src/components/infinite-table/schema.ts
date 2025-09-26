@@ -37,6 +37,19 @@ export const columnSchema = z.object({
   monthlyUsers: z.number(),
   regions: z.enum(REGIONS).array(),
   date: z.date(),
+  latency: z.number(),
+  level: z.string(),
+  status: z.number(),
+  method: z.string(),
+  host: z.string(),
+  pathname: z.string(),
+  timing: z.object({
+    dns: z.number(),
+    connection: z.number(),
+    tls: z.number(),
+    ttfb: z.number(),
+    transfer: z.number(),
+  }),
 });
 
 export type ColumnSchema = z.infer<typeof columnSchema>;

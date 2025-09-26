@@ -118,6 +118,19 @@ export function createMockData({
     rating: getRandomRating(),
     monthlyUsers: Math.floor(getRandomMonthlyUsers() * regionalMultiplier[region]),
     description: getRandomDescription(),
+    latency: Math.floor(Math.random() * 1000) + 50, // Random latency between 50-1050ms
+    level: ["info", "warn", "error"][Math.floor(Math.random() * 3)],
+    status: [200, 201, 400, 404, 500][Math.floor(Math.random() * 5)],
+    method: ["GET", "POST", "PUT", "DELETE"][Math.floor(Math.random() * 4)],
+    host: ["api.example.com", "app.example.com", "data.example.com"][Math.floor(Math.random() * 3)],
+    pathname: ["/api/v1/users", "/api/v1/data", "/api/v1/analytics", "/health"][Math.floor(Math.random() * 4)],
+    timing: {
+      dns: Math.floor(Math.random() * 100),
+      connection: Math.floor(Math.random() * 200),
+      tls: Math.floor(Math.random() * 50),
+      ttfb: Math.floor(Math.random() * 500),
+      transfer: Math.floor(Math.random() * 300),
+    },
     ...aiTool,
   }));
 }

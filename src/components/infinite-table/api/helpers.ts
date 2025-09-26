@@ -17,11 +17,7 @@ import type { SearchParamsType } from "../search-params";
 
 export const sliderFilterValues = [
   "latency",
-  "timing.dns",
-  "timing.connection",
-  "timing.tls",
-  "timing.ttfb",
-  "timing.transfer",
+  "timing",
 ] as const satisfies (keyof ColumnSchema)[];
 
 export const filterValues = [
@@ -43,20 +39,25 @@ export function filterData(
     for (const key in filters) {
       const filter = filters[key as keyof typeof filters];
       if (filter === undefined || filter === null) continue;
-      if (
-        (key === "latency" ||
-          key === "timing.dns" ||
-          key === "timing.connection" ||
-          key === "timing.tls" ||
-          key === "timing.ttfb" ||
-          key === "timing.transfer") &&
-        isArrayOfNumbers(filter)
-      ) {
-        if (filter.length === 1 && row[key] !== filter[0]) {
+      if (key === "latency" && isArrayOfNumbers(filter)) {
+        if (filter.length === 1 && row.latency !== filter[0]) {
           return false;
         } else if (
           filter.length === 2 &&
-          (row[key] < filter[0] || row[key] > filter[1])
+          (row.latency < filter[0] || row.latency > filter[1])
+        ) {
+          return false;
+        }
+        return true;
+      }
+      if (key === "timing" && isArrayOfNumbers(filter)) {
+        // For timing, we'll filter based on the total timing (sum of all phases)
+        const totalTiming = Object.values(row.timing).reduce((sum, val) => sum + val, 0);
+        if (filter.length === 1 && totalTiming !== filter[0]) {
+          return false;
+        } else if (
+          filter.length === 2 &&
+          (totalTiming < filter[0] || totalTiming > filter[1])
         ) {
           return false;
         }
