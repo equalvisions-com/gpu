@@ -169,7 +169,16 @@ export function DataTableInfinite<TData, TValue, TMeta>({
       defaultColumnVisibility,
     );
   const [columnSizing, setColumnSizing] = React.useState<ColumnSizingState>({});
-  const [columnSizingInfo, setColumnSizingInfo] = React.useState<ColumnSizingInfoState | null>(null);
+  const [columnSizingInfo, setColumnSizingInfoState] = React.useState<ColumnSizingInfoState | null>(null);
+
+  const setColumnSizingInfo = React.useCallback((updaterOrValue: ColumnSizingInfoState | ((old: ColumnSizingInfoState) => ColumnSizingInfoState)) => {
+    setColumnSizingInfoState((prev) => {
+      const newValue = typeof updaterOrValue === 'function'
+        ? updaterOrValue(prev || {} as ColumnSizingInfoState)
+        : updaterOrValue;
+      return newValue;
+    });
+  }, []);
   const topBarRef = React.useRef<HTMLDivElement>(null);
   const tableRef = React.useRef<HTMLTableElement>(null);
   const [topBarHeight, setTopBarHeight] = React.useState(0);
