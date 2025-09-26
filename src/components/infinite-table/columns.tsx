@@ -27,42 +27,17 @@ import type { ColumnSchema } from "./schema";
 
 export const columns: ColumnDef<ColumnSchema>[] = [
   {
-    accessorKey: "provider",
-    header: "Provider",
-    cell: ({ row }) => {
-      const provider = row.getValue<ColumnSchema["provider"]>("provider");
-      return (
-        <div className="flex items-center gap-2">
-          {provider === "coreweave" && (
-            <img
-              src="/logos/coreweave.png"
-              alt="CoreWeave"
-              className="h-5 w-5"
-            />
-          )}
-          <span className="font-medium capitalize">{provider}</span>
-        </div>
-      );
-    },
-    size: 120,
-    minSize: 120,
-    meta: {
-      cellClassName: "font-medium w-[--col-provider-size] max-w-[--col-provider-size]",
-      headerClassName: "min-w-[--header-provider-size] w-[--header-provider-size]",
-    },
-  },
-  {
     accessorKey: "instance_id",
     header: "Instance ID",
     cell: ({ row }) => {
       const instanceId = row.getValue<ColumnSchema["instance_id"]>("instance_id");
       return instanceId ? <TextWithTooltip text={instanceId} /> : <Minus className="h-4 w-4 text-muted-foreground/50" />;
     },
-    size: 160,
-    minSize: 160,
+    size: 200,
+    minSize: 120,
     meta: {
-      cellClassName: "font-mono font-semibold w-[--col-instance-size] max-w-[--col-instance-size]",
-      headerClassName: "min-w-[--header-instance-size] w-[--header-instance-size]",
+      cellClassName: "font-mono font-semibold",
+      headerClassName: "",
     },
   },
   {
@@ -72,11 +47,11 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       const gpuModel = row.getValue<ColumnSchema["gpu_model"]>("gpu_model");
       return gpuModel ? <span className="font-medium">{gpuModel}</span> : <Minus className="h-4 w-4 text-muted-foreground/50" />;
     },
-    size: 120,
-    minSize: 120,
+    size: 150,
+    minSize: 80,
     meta: {
-      cellClassName: "w-[--col-gpu-size] max-w-[--col-gpu-size]",
-      headerClassName: "w-[--header-gpu-size] max-w-[--header-gpu-size]",
+      cellClassName: "",
+      headerClassName: "",
     },
   },
   {
@@ -87,12 +62,11 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       return gpuCount ? <span className="font-mono font-medium">{gpuCount}x</span> : <Minus className="h-4 w-4 text-muted-foreground/50" />;
     },
     filterFn: "inNumberRange",
-    enableResizing: false,
-    size: 100,
-    minSize: 100,
+    size: 120,
+    minSize: 60,
     meta: {
-      cellClassName: "font-mono w-[--col-gpu-count-size] max-w-[--col-gpu-count-size]",
-      headerClassName: "w-[--header-gpu-count-size] max-w-[--header-gpu-count-size]",
+      cellClassName: "font-mono",
+      headerClassName: "",
     },
   },
   {
@@ -103,12 +77,11 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       return vramGb ? <span className="font-mono">{vramGb}</span> : <Minus className="h-4 w-4 text-muted-foreground/50" />;
     },
     filterFn: "inNumberRange",
-    enableResizing: false,
-    size: 100,
-    minSize: 100,
+    size: 120,
+    minSize: 60,
     meta: {
-      cellClassName: "font-mono w-[--col-vram-size] max-w-[--col-vram-size]",
-      headerClassName: "w-[--header-vram-size] max-w-[--header-vram-size]",
+      cellClassName: "font-mono",
+      headerClassName: "",
     },
   },
   {
@@ -119,12 +92,11 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       return vcpus ? <span className="font-mono">{vcpus}</span> : <Minus className="h-4 w-4 text-muted-foreground/50" />;
     },
     filterFn: "inNumberRange",
-    enableResizing: false,
-    size: 80,
-    minSize: 80,
+    size: 100,
+    minSize: 50,
     meta: {
-      cellClassName: "font-mono w-[--col-vcpus-size] max-w-[--col-vcpus-size]",
-      headerClassName: "w-[--header-vcpus-size] max-w-[--header-vcpus-size]",
+      cellClassName: "font-mono",
+      headerClassName: "",
     },
   },
   {
@@ -135,12 +107,11 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       return ramGb ? <span className="font-mono">{ramGb}</span> : <Minus className="h-4 w-4 text-muted-foreground/50" />;
     },
     filterFn: "inNumberRange",
-    enableResizing: false,
-    size: 90,
-    minSize: 90,
+    size: 110,
+    minSize: 60,
     meta: {
-      cellClassName: "font-mono w-[--col-ram-size] max-w-[--col-ram-size]",
-      headerClassName: "w-[--header-ram-size] max-w-[--header-ram-size]",
+      cellClassName: "font-mono",
+      headerClassName: "",
     },
   },
   {
@@ -151,12 +122,11 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       return storageTb ? <span className="font-mono">{storageTb}</span> : <Minus className="h-4 w-4 text-muted-foreground/50" />;
     },
     filterFn: "inNumberRange",
-    enableResizing: false,
-    size: 110,
-    minSize: 110,
+    size: 130,
+    minSize: 70,
     meta: {
-      cellClassName: "font-mono w-[--col-storage-size] max-w-[--col-storage-size]",
-      headerClassName: "w-[--header-storage-size] max-w-[--header-storage-size]",
+      cellClassName: "font-mono",
+      headerClassName: "",
     },
   },
   {
@@ -166,11 +136,11 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       const cpuModel = row.getValue<ColumnSchema["cpu_model"]>("cpu_model");
       return cpuModel ? <span className="text-sm">{cpuModel}</span> : <Minus className="h-4 w-4 text-muted-foreground/50" />;
     },
-    size: 140,
-    minSize: 140,
+    size: 170,
+    minSize: 100,
     meta: {
-      cellClassName: "w-[--col-cpu-size] max-w-[--col-cpu-size]",
-      headerClassName: "min-w-[--header-cpu-size] w-[--header-cpu-size]",
+      cellClassName: "",
+      headerClassName: "",
     },
   },
   {
@@ -188,14 +158,36 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       ) : <Minus className="h-4 w-4 text-muted-foreground/50" />;
     },
     filterFn: "inNumberRange",
-    enableResizing: false,
-    size: 120,
-    minSize: 120,
+    size: 150,
+    minSize: 80,
     meta: {
-      headerClassName:
-        "w-[--header-rate-size] max-w-[--header-rate-size] min-w-[--header-rate-size]",
-      cellClassName:
-        "font-mono w-[--col-rate-size] max-w-[--col-rate-size] min-w-[--col-rate-size]",
+      headerClassName: "",
+      cellClassName: "font-mono",
+    },
+  },
+  {
+    accessorKey: "provider",
+    header: "Provider",
+    cell: ({ row }) => {
+      const provider = row.getValue<ColumnSchema["provider"]>("provider");
+      return (
+        <div className="flex items-center gap-2">
+          {provider === "coreweave" && (
+            <img
+              src="/logos/coreweave.png"
+              alt="CoreWeave"
+              className="h-5 w-5"
+            />
+          )}
+          <span className="font-medium capitalize">{provider}</span>
+        </div>
+      );
+    },
+    size: 140,
+    minSize: 80,
+    meta: {
+      cellClassName: "font-medium",
+      headerClassName: "",
     },
   },
   {
@@ -215,11 +207,11 @@ export const columns: ColumnDef<ColumnSchema>[] = [
         </span>
       );
     },
-    size: 80,
-    minSize: 80,
+    size: 100,
+    minSize: 50,
     meta: {
-      cellClassName: "w-[--col-class-size] max-w-[--col-class-size]",
-      headerClassName: "w-[--header-class-size] max-w-[--header-class-size]",
+      cellClassName: "",
+      headerClassName: "",
     },
   },
   {
@@ -239,11 +231,11 @@ export const columns: ColumnDef<ColumnSchema>[] = [
         </span>
       ) : <Minus className="h-4 w-4 text-muted-foreground/50" />;
     },
-    size: 100,
-    minSize: 100,
+    size: 120,
+    minSize: 60,
     meta: {
-      cellClassName: "w-[--col-network-size] max-w-[--col-network-size]",
-      headerClassName: "w-[--header-network-size] max-w-[--header-network-size]",
+      cellClassName: "",
+      headerClassName: "",
     },
   },
   {
@@ -255,14 +247,11 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       const observedAt = new Date(row.getValue<ColumnSchema["observed_at"]>("observed_at"));
       return <HoverCardTimestamp date={observedAt} />;
     },
-    enableResizing: false,
-    size: 180,
-    minSize: 180,
+    size: 200,
+    minSize: 120,
     meta: {
-      headerClassName:
-        "w-[--header-observed-size] max-w-[--header-observed-size] min-w-[--header-observed-size]",
-      cellClassName:
-        "font-mono w-[--col-observed-size] max-w-[--col-observed-size] min-w-[--col-observed-size]",
+      headerClassName: "",
+      cellClassName: "font-mono",
     },
   },
 ];

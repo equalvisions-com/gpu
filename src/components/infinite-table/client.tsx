@@ -113,6 +113,7 @@ export function Client() {
         cpu_model: false,
         network: false,
         observed_at: false,
+        class: false,
       }}
       meta={metadata}
       filterFields={filterFields}

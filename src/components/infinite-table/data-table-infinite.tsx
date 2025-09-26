@@ -35,6 +35,7 @@ import {
 import type {
   ColumnDef,
   ColumnFiltersState,
+  ColumnSizingInfoState,
   Row,
   RowSelectionState,
   SortingState,
@@ -166,6 +167,8 @@ export function DataTableInfinite<TData, TValue, TMeta>({
       "data-table-visibility",
       defaultColumnVisibility,
     );
+  const [columnSizing, setColumnSizing] = React.useState<ColumnSizingState>({});
+  const [columnSizingInfo, setColumnSizingInfo] = React.useState<ColumnSizingInfoState>({});
   const topBarRef = React.useRef<HTMLDivElement>(null);
   const tableRef = React.useRef<HTMLTableElement>(null);
   const [topBarHeight, setTopBarHeight] = React.useState(0);
@@ -209,8 +212,11 @@ export function DataTableInfinite<TData, TValue, TMeta>({
       columnVisibility,
       rowSelection,
       columnOrder,
+      columnSizing,
+      columnSizingInfo,
     },
     enableMultiRowSelection: false,
+    enableColumnResizing: true,
     columnResizeMode: "onChange",
     getRowId,
     onColumnVisibilityChange: setColumnVisibility,
@@ -218,6 +224,8 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
     onColumnOrderChange: setColumnOrder,
+    onColumnSizingChange: setColumnSizing,
+    onColumnSizingInfoChange: setColumnSizingInfo,
     getSortedRowModel: getSortedRowModel(),
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
@@ -275,30 +283,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rowSelection, selectedRow, isLoading, isFetching]);
 
-  /**
-   * https://tanstack.com/table/v8/docs/guide/column-sizing#advanced-column-resizing-performance
-   * Instead of calling `column.getSize()` on every render for every header
-   * and especially every data cell (very expensive),
-   * we will calculate all column sizes at once at the root table level in a useMemo
-   * and pass the column sizes down as CSS variables to the <table> element.
-   */
-  const columnSizeVars = React.useMemo(() => {
-    const headers = table.getFlatHeaders();
-    const colSizes: { [key: string]: string } = {};
-    for (let i = 0; i < headers.length; i++) {
-      const header = headers[i]!;
-      // REMINDER: replace "." with "-" to avoid invalid CSS variable name (e.g. "timing.dns" -> "timing-dns")
-      colSizes[`--header-${header.id.replace(".", "-")}-size`] =
-        `${header.getSize()}px`;
-      colSizes[`--col-${header.column.id.replace(".", "-")}-size`] =
-        `${header.column.getSize()}px`;
-    }
-    return colSizes;
-  }, [
-    table.getState().columnSizingInfo,
-    table.getState().columnSizing,
-    table.getState().columnVisibility,
-  ]);
 
   useHotKey(() => {
     setColumnOrder([]);
@@ -325,7 +309,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
         style={
           {
             "--top-bar-height": `${topBarHeight}px`,
-            ...columnSizeVars,
           } as React.CSSProperties
         }
       >
@@ -401,6 +384,11 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                             "relative select-none truncate border-b border-border [&>.cursor-col-resize]:last:opacity-0",
                             header.column.columnDef.meta?.headerClassName,
                           )}
+                          style={{
+                            width: `${header.getSize()}px`,
+                            maxWidth: `${header.getSize()}px`,
+                            minWidth: `${header.getSize()}px`,
+                          }}
                           aria-sort={
                             header.column.getIsSorted() === "asc"
                               ? "ascending"
@@ -540,6 +528,11 @@ function Row<TData>({
             "truncate border-b border-border",
             cell.column.columnDef.meta?.cellClassName,
           )}
+          style={{
+            width: `${cell.column.getSize()}px`,
+            maxWidth: `${cell.column.getSize()}px`,
+            minWidth: `${cell.column.getSize()}px`,
+          }}
         >
           {flexRender(cell.column.columnDef.cell, cell.getContext())}
         </TableCell>
