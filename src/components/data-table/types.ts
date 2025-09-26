@@ -33,6 +33,7 @@ export type Slider = {
 export type Timerange = {
   type: "timerange";
   // Timerange typically works with date ranges, no min/max needed like slider
+  options?: Option[];
 };
 
 

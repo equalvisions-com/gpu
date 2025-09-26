@@ -86,7 +86,7 @@ export function filterData(
         }
       }
       if (key === "level" && Array.isArray(filter)) {
-        const typedFilter = filter as unknown as (typeof LEVELS)[number][];
+        const typedFilter = filter as unknown as ("success" | "warning" | "error" | "info")[];
         if (!typedFilter.includes(row[key])) {
           return false;
         }

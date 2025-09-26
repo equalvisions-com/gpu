@@ -4,6 +4,9 @@ import { ColumnSchema } from "../schema";
 import { subMinutes } from "date-fns";
 import { REGIONS } from "@/constants/region";
 
+// HTTP status levels
+const HTTP_LEVELS = ["success", "warning", "error", "info"] as const;
+
 const DAYS = 20;
 
 // AI Tool company names and tool names
@@ -119,7 +122,7 @@ export function createMockData({
     monthlyUsers: Math.floor(getRandomMonthlyUsers() * regionalMultiplier[region]),
     description: getRandomDescription(),
     latency: Math.floor(Math.random() * 1000) + 50, // Random latency between 50-1050ms
-    level: ["info", "warn", "error"][Math.floor(Math.random() * 3)],
+    level: HTTP_LEVELS[Math.floor(Math.random() * HTTP_LEVELS.length)],
     status: [200, 201, 400, 404, 500][Math.floor(Math.random() * 5)],
     method: ["GET", "POST", "PUT", "DELETE"][Math.floor(Math.random() * 4)],
     host: ["api.example.com", "app.example.com", "data.example.com"][Math.floor(Math.random() * 3)],

@@ -22,6 +22,9 @@ const stringToBoolean = z
   })
   .pipe(z.boolean().optional());
 
+// HTTP status levels
+const HTTP_LEVELS = ["success", "warning", "error", "info"] as const;
+
 
 export const columnSchema = z.object({
   uuid: z.string(),
@@ -38,7 +41,7 @@ export const columnSchema = z.object({
   regions: z.enum(REGIONS).array(),
   date: z.date(),
   latency: z.number(),
-  level: z.string(),
+  level: z.enum(HTTP_LEVELS),
   status: z.number(),
   method: z.string(),
   host: z.string(),
@@ -50,6 +53,7 @@ export const columnSchema = z.object({
     ttfb: z.number(),
     transfer: z.number(),
   }),
+  percentile: z.number().optional(),
 });
 
 export type ColumnSchema = z.infer<typeof columnSchema>;

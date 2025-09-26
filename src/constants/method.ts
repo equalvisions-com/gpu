@@ -10,3 +10,5 @@ export const AI_CATEGORIES = [
   "Conversational AI",
   "Image Generation"
 ] as const;
+
+export const METHODS = ["GET", "POST", "PUT", "DELETE"] as const;

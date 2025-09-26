@@ -1,8 +1,10 @@
-import { _LEVELS } from "@/constants/levels";
 import { cn } from "../utils";
 
+// HTTP status level types
+const HTTP_LEVELS = ["success", "warning", "error", "info"] as const;
+
 export function getLevelColor(
-  value: (typeof _LEVELS)[number]
+  value: (typeof HTTP_LEVELS)[number]
 ): Record<"text" | "bg" | "border", string> {
   switch (value) {
     case "success":
@@ -33,7 +35,7 @@ export function getLevelColor(
   }
 }
 
-export function getLevelRowClassName(value: (typeof _LEVELS)[number]): string {
+export function getLevelRowClassName(value: (typeof HTTP_LEVELS)[number]): string {
   switch (value) {
     case "success":
       return "";
@@ -57,7 +59,7 @@ export function getLevelRowClassName(value: (typeof _LEVELS)[number]): string {
   }
 }
 
-export function getLevelLabel(value: (typeof _LEVELS)[number]): string {
+export function getLevelLabel(value: (typeof HTTP_LEVELS)[number]): string {
   switch (value) {
     case "success":
       return "2xx";

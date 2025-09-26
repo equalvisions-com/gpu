@@ -251,7 +251,7 @@ export function DataTableFilterCommand({
 
                   const options = getFieldOptions({ field });
 
-                  return options.map((optionValue) => {
+                  return options.map((optionValue: string | number | boolean | undefined) => {
                     return (
                       <CommandItem
                         key={`${String(field.value)}:${optionValue}`}
