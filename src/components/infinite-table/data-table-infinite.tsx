@@ -333,10 +333,9 @@ export function DataTableInfinite<TData, TValue, TMeta>({
           className={cn(
             "h-full w-full flex-col sm:sticky sm:top-0 sm:max-h-screen sm:min-h-screen sm:min-w-52 sm:max-w-52 sm:self-start md:min-w-72 md:max-w-72",
             // CSS responsive defaults: hidden on mobile, visible on desktop
-            "hidden sm:flex",
-            "group-data-[expanded=false]/controls:hidden",
+            "hidden group-data-[expanded=true]/controls:flex sm:flex",
             // Mobile: fixed overlay that takes full screen
-            "fixed inset-0 z-40 bg-background overflow-y-auto sm:static sm:z-auto sm:overflow-y-visible",
+            "fixed inset-0 z-40 bg-background overflow-y-auto scrollbar-hide sm:static sm:z-auto sm:overflow-y-visible",
           )}
         >
           <div className="border-b border-border bg-background p-2 md:sticky md:top-0">
@@ -355,7 +354,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
           <div className="p-2">
             <DataTableFilterCommand searchParamsParser={searchParamsParser} />
           </div>
-          <div className="flex-1 p-2 sm:overflow-y-scroll">
+          <div className="flex-1 p-2 sm:overflow-y-scroll scrollbar-hide">
             <DataTableFilterControls />
           </div>
           <div className="border-t border-border bg-background p-4 md:sticky md:bottom-0">
