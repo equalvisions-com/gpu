@@ -36,6 +36,7 @@ import type {
   ColumnDef,
   ColumnFiltersState,
   ColumnSizingInfoState,
+  ColumnSizingState,
   Row,
   RowSelectionState,
   SortingState,
