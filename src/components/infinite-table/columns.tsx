@@ -45,7 +45,22 @@ export const columns: ColumnDef<ColumnSchema>[] = [
     header: "GPU Model",
     cell: ({ row }) => {
       const gpuModel = row.getValue<ColumnSchema["gpu_model"]>("gpu_model");
-      return gpuModel ? <span className="font-medium">{gpuModel}</span> : <Minus className="h-4 w-4 text-muted-foreground/50" />;
+      if (!gpuModel) return <Minus className="h-4 w-4 text-muted-foreground/50" />;
+
+      const isNvidia = gpuModel.toLowerCase().includes('nvidia');
+
+      return (
+        <div className="flex items-center gap-2">
+          {isNvidia && (
+            <img
+              src="/logos/nvidia.png"
+              alt="NVIDIA"
+              className="h-4 w-4 object-contain"
+            />
+          )}
+          <span className="font-medium">{gpuModel}</span>
+        </div>
+      );
     },
     size: 150,
     minSize: 80,
