@@ -139,6 +139,11 @@ export class CoreWeaveScraper implements ProviderScraper {
           text.includes('ib') || text.includes('infiniband') ? 'InfiniBand' :
           text.includes('ethernet') ? 'Ethernet' : 'Unknown';
 
+        // Skip storing CoreWeave GPU rows that don't include a GPU Count
+        if (gpuCount === undefined || gpuCount === null) {
+          return; // skip this row
+        }
+
         const priceRow: PriceRow = {
           provider: 'coreweave',
           source_url: PRICING_URL,

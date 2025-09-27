@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { coreweaveScraper, nebiusScraper } from '@/lib/providers';
+import { coreweaveScraper, nebiusScraper, hyperstackScraper } from '@/lib/providers';
 import { pricingCache } from '@/lib/redis';
 import type { ProviderScraper } from '@/lib/providers';
 
@@ -9,6 +9,7 @@ export const maxDuration = 30; // Allow up to 30 seconds for scraping
 const scrapers: Record<string, ProviderScraper> = {
   coreweave: coreweaveScraper,
   nebius: nebiusScraper,
+  hyperstack: hyperstackScraper,
 };
 
 export async function POST(request: NextRequest) {
@@ -22,6 +23,7 @@ export async function POST(request: NextRequest) {
     // Get provider from query parameter, default to coreweave
     const { searchParams } = new URL(request.url);
     const provider = searchParams.get('provider') || 'coreweave';
+    const force = searchParams.get('force') === '1';
 
     const scraper = scrapers[provider];
     if (!scraper) {
@@ -38,7 +40,7 @@ export async function POST(request: NextRequest) {
     const result = await scraper.scrape();
 
     // Store the results in Redis (only if content changed)
-    const wasUpdated = await pricingCache.storePricingData(result);
+    const wasUpdated = await pricingCache.storePricingData(result, force);
 
     const duration = Date.now() - startTime;
 
@@ -49,6 +51,7 @@ export async function POST(request: NextRequest) {
       provider: result.provider,
       rowsScraped: result.rows.length,
       wasUpdated,
+      force,
       duration,
       observedAt: result.observedAt,
       sourceHash: result.sourceHash,

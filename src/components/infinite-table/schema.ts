@@ -11,10 +11,9 @@ export const columnSchema = z.object({
   uuid: z.string(),
 
   // Core identification (from PriceRow)
-  provider: z.enum(["coreweave", "nebius"]),
+  provider: z.enum(["coreweave", "nebius", "hyperstack"]),
   source_url: z.string(),
   observed_at: z.string(),
-  instance_id: z.string().optional(),
   item: z.string().optional(), // For Nebius data
   sku: z.string().optional(),
   region: z.string().optional(),
@@ -28,7 +27,6 @@ export const columnSchema = z.object({
   system_ram_gb: z.number().optional(),
   ram_gb: z.string().optional(), // For Nebius data
   local_storage_tb: z.number().optional(),
-  cpu_model: z.string().optional(),
 
   // Pricing
   price_unit: z.enum(["hour", "month", "gb_month", "gpu_hour"]),
@@ -39,9 +37,9 @@ export const columnSchema = z.object({
   billing_notes: z.string().optional(),
 
   // Flags
-  class: z.enum(["GPU", "CPU", "service"]),
-  network: z.enum(["InfiniBand", "Ethernet", "Unknown"]).optional(),
   spot: z.boolean().optional(),
+  class: z.enum(["GPU", "CPU", "service"]).optional(),
+  network: z.enum(["InfiniBand", "Ethernet", "Unknown"]).optional(),
 
   // Computed fields
   percentile: z.number().optional(),
@@ -51,7 +49,7 @@ export type ColumnSchema = z.infer<typeof columnSchema>;
 
 // GPU pricing filter schema
 export const columnFilterSchema = z.object({
-  provider: z.enum(["coreweave", "nebius"]).optional(),
+  provider: z.enum(["coreweave", "nebius", "hyperstack"]).optional(),
   gpu_model: z.string().optional(),
   instance_id: z.string().optional(),
   cpu_model: z.string().optional(),

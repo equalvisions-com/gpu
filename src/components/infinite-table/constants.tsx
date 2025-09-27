@@ -23,16 +23,6 @@ export const filterFields = [
     type: "input",
   },
   {
-    label: "Instance ID",
-    value: "instance_id",
-    type: "input",
-  },
-  {
-    label: "CPU Model",
-    value: "cpu_model",
-    type: "input",
-  },
-  {
     label: "GPU Count",
     value: "gpu_count",
     type: "slider",
@@ -74,26 +64,6 @@ export const filterFields = [
     min: 0.1,
     max: 50,
   },
-  {
-    label: "Class",
-    value: "class",
-    type: "checkbox",
-    options: [
-      { label: "GPU", value: "GPU" },
-      { label: "CPU", value: "CPU" },
-      { label: "Service", value: "service" },
-    ],
-  },
-  {
-    label: "Network",
-    value: "network",
-    type: "checkbox",
-    options: [
-      { label: "InfiniBand", value: "InfiniBand" },
-      { label: "Ethernet", value: "Ethernet" },
-      { label: "Unknown", value: "Unknown" },
-    ],
-  },
 ] satisfies DataTableFilterField<ColumnSchema>[];
 
 export const sheetFields = [
@@ -105,15 +75,6 @@ export const sheetFields = [
       <div className="font-medium text-lg capitalize">{props.provider}</div>
     ),
     skeletonClassName: "w-24",
-  },
-  {
-    id: "instance_id",
-    label: "Instance ID",
-    type: "readonly",
-    component: (props) => (
-      <div className="font-mono font-semibold text-xl">{props.instance_id || 'N/A'}</div>
-    ),
-    skeletonClassName: "w-48",
   },
   {
     id: "gpu_model",
@@ -183,15 +144,6 @@ export const sheetFields = [
     skeletonClassName: "w-20",
   },
   {
-    id: "cpu_model",
-    label: "CPU Model",
-    type: "readonly",
-    component: (props) => (
-      <span>{props.cpu_model || 'N/A'}</span>
-    ),
-    skeletonClassName: "w-32",
-  },
-  {
     id: "price_hour_usd",
     label: "Hourly Rate",
     type: "readonly",
@@ -202,30 +154,6 @@ export const sheetFields = [
       </div>
     ) : <span className="text-muted-foreground">N/A</span>,
     skeletonClassName: "w-24",
-  },
-  {
-    id: "class",
-    label: "Class",
-    type: "readonly",
-    component: (props) => (
-      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-        props.class === "GPU"
-          ? "bg-blue-100 text-blue-800"
-          : "bg-green-100 text-green-800"
-      }`}>
-        {props.class}
-      </span>
-    ),
-    skeletonClassName: "w-16",
-  },
-  {
-    id: "network",
-    label: "Network",
-    type: "readonly",
-    component: (props) => (
-      <span className="text-sm">{props.network || 'Unknown'}</span>
-    ),
-    skeletonClassName: "w-20",
   },
   {
     id: "source_url",

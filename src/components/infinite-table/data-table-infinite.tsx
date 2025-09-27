@@ -236,7 +236,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     onColumnOrderChange: setColumnOrder,
     onColumnSizingChange: setColumnSizing,
     onColumnSizingInfoChange: setColumnSizingInfo,
-    getSortedRowModel: getSortedRowModel(),
+    // Disable client-side sorting - all sorting happens on server side
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getFacetedRowModel: getFacetedRowModel(),

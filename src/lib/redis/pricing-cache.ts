@@ -7,14 +7,16 @@ export class PricingCache {
   /**
    * Store pricing data for a provider if content has changed
    */
-  async storePricingData(result: ProviderResult): Promise<boolean> {
+  async storePricingData(result: ProviderResult, force: boolean = false): Promise<boolean> {
     const { provider, rows, observedAt, sourceHash } = result;
 
     // Check if content has changed
-    const currentHash = await this.getCurrentHash(provider);
-    if (currentHash === sourceHash) {
-      // Content hasn't changed, no need to update
-      return false;
+    if (!force) {
+      const currentHash = await this.getCurrentHash(provider);
+      if (currentHash === sourceHash) {
+        // Content hasn't changed, no need to update
+        return false;
+      }
     }
 
     // Get next version number

@@ -1,12 +1,11 @@
 import { NextRequest } from "next/server";
+import SuperJSON from "superjson";
 import type { InfiniteQueryResponse, LogsMeta } from "@/components/infinite-table/query-options";
 import type { ColumnSchema } from "@/components/infinite-table/schema";
 import { searchParamsCache } from "@/components/infinite-table/search-params";
-import { pricingCache } from "@/lib/redis";
 import {
   filterData,
   getFacetsFromData,
-  percentileData,
   sliderFilterValues,
   sortData,
   splitData,
@@ -22,21 +21,25 @@ export async function GET(req: NextRequest): Promise<Response> {
 
     const search = searchParamsCache.parse(Object.fromEntries(_search));
 
-    // Fetch pricing data directly from Redis cache
-    const pricingSnapshots = await pricingCache.getAllPricingSnapshots();
+    // Fetch pricing data from our pricing API
+    const pricingResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/pricing`);
+    if (!pricingResponse.ok) {
+      throw new Error(`Failed to fetch pricing data: ${pricingResponse.status}`);
+    }
 
-    // Flatten all pricing data from all providers
-    let totalData: ColumnSchema[] = pricingSnapshots.flatMap((snapshot: any) =>
-      snapshot.rows.map((row: any) => ({
-        uuid: crypto.randomUUID(),
-        ...row,
-        provider: snapshot.provider,
-        observed_at: snapshot.observed_at || snapshot.last_updated,
-      }))
+    const pricingSnapshots = await pricingResponse.json();
+
+    // Flatten all pricing data from all providers, only including GPU class rows
+    const totalData: ColumnSchema[] = pricingSnapshots.flatMap((snapshot: any) =>
+      snapshot.rows
+        .filter((row: any) => row.class === 'GPU')
+        .map((row: any) => ({
+          uuid: crypto.randomUUID(),
+          ...row,
+          provider: snapshot.provider,
+          // Keep the original observed_at field from the row, which is already a string
+        }))
     );
-
-    // Only include GPU class rows (CPUs remain stored but are not displayed)
-    totalData = totalData.filter((row) => row.class === 'GPU');
 
     // Apply date filtering if specified
     const _date =
@@ -58,32 +61,34 @@ export async function GET(req: NextRequest): Promise<Response> {
     const sortedData = sortData(filteredData, search.sort);
     const withoutSliderFacets = getFacetsFromData(withoutSliderData);
     const facets = getFacetsFromData(filteredData);
-    const withPercentileData = percentileData(sortedData);
-    const data = splitData(withPercentileData, search);
+    const data = splitData(sortedData, search);
 
-    // For pricing data, we don't use cursors
-    const nextCursor = null;
-    const prevCursor = null;
+    const nextCursor =
+      data.length > 0 ? new Date(data[data.length - 1].observed_at).getTime() : null;
+    const prevCursor =
+      data.length > 0 ? new Date(data[0].observed_at).getTime() : new Date().getTime();
 
-    return Response.json({
-      data,
-      meta: {
-        totalRowCount: totalData.length,
-        filterRowCount: filteredData.length,
-        // REMINDER: we separate the slider for keeping the min/max facets of the slider fields
-        facets: {
-          ...withoutSliderFacets,
-          ...Object.fromEntries(
-            Object.entries(facets).filter(
-              ([key]) => !sliderFilterValues.includes(key as any),
+    return Response.json(
+      SuperJSON.stringify({
+        data,
+        meta: {
+          totalRowCount: totalData.length,
+          filterRowCount: filteredData.length,
+          // REMINDER: we separate the slider for keeping the min/max facets of the slider fields
+          facets: {
+            ...withoutSliderFacets,
+            ...Object.fromEntries(
+              Object.entries(facets).filter(
+                ([key]) => !sliderFilterValues.includes(key as any),
+              ),
             ),
-          ),
+          },
+          metadata: {} satisfies LogsMeta,
         },
-        metadata: {} satisfies LogsMeta,
-      },
-      prevCursor,
-      nextCursor,
-    } satisfies InfiniteQueryResponse<ColumnSchema[], LogsMeta>);
+        prevCursor,
+        nextCursor,
+      } satisfies InfiniteQueryResponse<ColumnSchema[], LogsMeta>),
+    );
   } catch (error) {
     console.error('Error in pricing API:', error);
     return Response.json(

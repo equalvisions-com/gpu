@@ -27,10 +27,6 @@ export const sliderFilterValues = [
 export const filterValues = [
   "provider",
   "gpu_model",
-  "instance_id",
-  "cpu_model",
-  "class",
-  "network",
   ...sliderFilterValues,
   "observed_at",
 ] as const satisfies (keyof ColumnSchema)[];
@@ -76,19 +72,10 @@ export function filterData(
         continue;
       }
 
-      // Handle string filters (provider, gpu_model, instance_id, cpu_model)
-      if ((key === "provider" || key === "gpu_model" || key === "instance_id" || key === "cpu_model") && typeof filter === 'string') {
+      // Handle string filters (provider, gpu_model)
+      if ((key === "provider" || key === "gpu_model") && typeof filter === 'string') {
         const value = row[key];
         if (typeof value === 'string' && !value.toLowerCase().includes(filter.toLowerCase())) {
-          return false;
-        }
-        continue;
-      }
-
-      // Handle enum filters (class, network)
-      if ((key === "class" || key === "network") && typeof filter === 'string') {
-        const value = row[key];
-        if (value !== filter) {
           return false;
         }
         continue;
@@ -124,7 +111,7 @@ export function splitData(data: ColumnSchema[], search: SearchParamsType) {
   // For pricing data, we don't need complex cursor-based pagination
   // Just return a slice of the data based on start and size
   const start = search.start || 0;
-  const size = search.size || 50;
+  const size = search.size || 1000; // Increase default page size for proper cross-provider sorting
 
   return data.slice(start, start + size);
 }

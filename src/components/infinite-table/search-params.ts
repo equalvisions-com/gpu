@@ -36,8 +36,6 @@ export const searchParamsParser = {
   // GPU PRICING FILTERS
   provider: parseAsString,
   gpu_model: parseAsString,
-  instance_id: parseAsString,
-  cpu_model: parseAsString,
   gpu_count: parseAsArrayOf(parseAsInteger, SLIDER_DELIMITER),
   vram_gb: parseAsArrayOf(parseAsInteger, SLIDER_DELIMITER),
   vcpus: parseAsArrayOf(parseAsInteger, SLIDER_DELIMITER),
@@ -45,8 +43,6 @@ export const searchParamsParser = {
   local_storage_tb: parseAsArrayOf(parseAsFloat, SLIDER_DELIMITER),
   price_hour_usd: parseAsArrayOf(parseAsFloat, SLIDER_DELIMITER),
   observed_at: parseAsArrayOf(parseAsTimestamp, RANGE_DELIMITER),
-  class: parseAsStringLiteral(["GPU", "CPU", "service"]),
-  network: parseAsStringLiteral(["InfiniBand", "Ethernet", "Unknown"]),
   // REQUIRED FOR SORTING & PAGINATION
   sort: parseAsSort,
   size: parseAsInteger.withDefault(40),

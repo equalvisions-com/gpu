@@ -1,5 +1,5 @@
 // Provider types
-export type Provider = "coreweave" | "nebius";
+export type Provider = "coreweave" | "nebius" | "hyperstack" | "runpod";
 
 // CoreWeave pricing schema
 export type CoreWeavePriceRow = {
@@ -57,8 +57,36 @@ export type NebiusPriceRow = {
   raw_cost: string;             // original price string (e.g. "$2.95", "from $1.82", "Contact us")
 };
 
+// (moved final union below to include Hyperstack)
+
+// Hyperstack pricing schema (On-Demand GPU)
+export type HyperstackPriceRow = {
+  provider: "hyperstack";
+  source_url: string;           // https://www.hyperstack.cloud/gpu-pricing
+  observed_at: string;          // ISO timestamp
+
+  // Identification
+  instance_id?: string;         // slug of gpu_model (e.g., "nvidia-h100-sxm")
+
+  // Hardware
+  gpu_model: string;            // e.g., "NVIDIA H100 SXM"
+  gpu_count: number;            // always 1 (per GPU pricing)
+  vram_gb?: number;             // parsed from VRAM (GB)
+  vcpus?: number;               // parsed from Max pCPUs per GPU
+  system_ram_gb?: number;       // parsed from Max RAM (GB) per GPU
+
+  // Pricing
+  price_unit: "gpu_hour";      // per GPU-hour
+  price_hour_usd?: number;      // numeric price value
+  raw_cost?: string;            // original price text (e.g., "$2.40")
+
+  // Flags
+  class: "GPU";                // On-demand GPU rows only
+  network?: "InfiniBand" | "Ethernet" | "Unknown"; // not specified
+};
+
 // Union type for all price rows
-export type PriceRow = CoreWeavePriceRow | NebiusPriceRow;
+export type PriceRow = CoreWeavePriceRow | NebiusPriceRow | HyperstackPriceRow;
 
 export type ProviderSnapshot = {
   provider: Provider;

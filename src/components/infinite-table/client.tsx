@@ -109,11 +109,7 @@ export function Client() {
         "timing.tls": false,
         "timing.ttfb": false,
         "timing.transfer": false,
-        instance_id: false,
-        cpu_model: false,
-        network: false,
         observed_at: false,
-        class: false,
       }}
       meta={metadata}
       filterFields={filterFields}
