@@ -1,5 +1,5 @@
 // Provider types
-export type Provider = "coreweave" | "nebius" | "hyperstack" | "runpod";
+export type Provider = "coreweave" | "nebius" | "hyperstack" | "runpod" | "lambda";
 
 // CoreWeave pricing schema
 export type CoreWeavePriceRow = {
@@ -85,8 +85,59 @@ export type HyperstackPriceRow = {
   network?: "InfiniBand" | "Ethernet" | "Unknown"; // not specified
 };
 
+// RunPod pricing schema
+export type RunPodPriceRow = {
+  provider: "runpod";
+  source_url: string;           // https://www.runpod.io/pricing
+  observed_at: string;          // ISO timestamp
+
+  // Identification
+  instance_id?: string;         // deploy link parameter (e.g., "B200", "H100+NVL")
+
+  // Hardware
+  gpu_model: string;            // e.g., "B200", "H100 NVL"
+  gpu_count: number;            // always 1 (per GPU pricing)
+  vram_gb: number;              // VRAM in GB (e.g., 180, 94, 80)
+  vcpus: number;                // vCPUs count (e.g., 28, 16, 20)
+  system_ram_gb: number;        // System RAM in GB (e.g., 283, 94, 125)
+
+  // Pricing
+  price_unit: "gpu_hour";      // per GPU-hour
+  price_hour_usd: number;       // hourly price in USD
+  raw_cost: string;             // original price text (e.g., "$5.99", "$3.00")
+
+  // Flags
+  class: "GPU";                // GPU instances only
+};
+
+// Lambda pricing schema
+export type LambdaPriceRow = {
+  provider: "lambda";
+  source_url: string;           // https://lambda.ai/pricing
+  observed_at: string;          // ISO timestamp
+
+  // Identification
+  instance_id?: string;         // instance type (e.g., "8x-nvidia-b200-sxm6")
+
+  // Hardware (per GPU specs)
+  gpu_model: string;            // e.g., "NVIDIA B200 SXM6"
+  gpu_count: number;            // number of GPUs in instance (1, 2, 4, 8)
+  vram_gb: number;              // VRAM per GPU in GB
+  vcpus: number;                // total vCPUs for the instance
+  system_ram_gb: number;        // total RAM for the instance in GB
+  storage: string;              // storage description (e.g., "22 TiB SSD")
+
+  // Pricing
+  price_unit: "gpu_hour";      // per GPU-hour
+  price_hour_usd: number;       // price per GPU per hour
+  raw_cost: string;             // original price text
+
+  // Flags
+  class: "GPU";                // GPU instances only
+};
+
 // Union type for all price rows
-export type PriceRow = CoreWeavePriceRow | NebiusPriceRow | HyperstackPriceRow;
+export type PriceRow = CoreWeavePriceRow | NebiusPriceRow | HyperstackPriceRow | RunPodPriceRow | LambdaPriceRow;
 
 export type ProviderSnapshot = {
   provider: Provider;
