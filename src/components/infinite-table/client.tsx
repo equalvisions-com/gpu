@@ -130,10 +130,10 @@ export function Client() {
       getFacetedMinMaxValues={getFacetedMinMaxValues(facets)}
       renderLiveRow={(props) => {
         if (!liveMode.timestamp) return null;
-        if (props?.row.original.instance_id !== liveMode?.row?.instance_id) return null;
+        if (props?.row.original.uuid !== liveMode?.row?.uuid) return null;
         return <LiveRow />;
       }}
-      renderSheetTitle={(props) => props.row?.original.instance_id}
+      renderSheetTitle={(props) => props.row?.original.uuid}
       searchParamsParser={searchParamsParser}
     />
     </ControlsProvider>
@@ -151,7 +151,7 @@ function useResetFocus() {
   }, ".");
 }
 
-// TODO: make a BaseObject (incl. observed_at and instance_id e.g. for every upcoming branch of infinite table)
+// TODO: make a BaseObject (incl. observed_at and uuid e.g. for every upcoming branch of infinite table)
 export function useLiveMode<TData extends { observed_at: string }>(data: TData[]) {
   const [live] = useQueryState("live", searchParamsParser.live);
   // REMINDER: used to capture the live mode on timestamp
