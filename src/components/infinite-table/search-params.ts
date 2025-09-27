@@ -45,7 +45,7 @@ export const searchParamsParser = {
   observed_at: parseAsArrayOf(parseAsTimestamp, RANGE_DELIMITER),
   // REQUIRED FOR SORTING & PAGINATION
   sort: parseAsSort,
-  size: parseAsInteger.withDefault(40),
+  size: parseAsInteger.withDefault(50),
   start: parseAsInteger.withDefault(0),
   // REQUIRED FOR INFINITE SCROLLING (Live Mode and Load More)
   direction: parseAsStringLiteral(["prev", "next"]).withDefault("next"),

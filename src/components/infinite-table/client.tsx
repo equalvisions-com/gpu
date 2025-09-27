@@ -30,12 +30,7 @@ export function Client() {
   useResetFocus();
 
   const flatData = React.useMemo(() => {
-    const allData = data?.pages?.flatMap((page) => page.data ?? []) ?? [];
-    // Remove duplicates based on UUID to prevent React key conflicts
-    const uniqueData = allData.filter(
-      (item, index, self) => self.findIndex((i) => i.uuid === item.uuid) === index
-    );
-    return uniqueData;
+    return data?.pages?.flatMap((page) => page.data ?? []) ?? [];
   }, [data?.pages]);
 
   const liveMode = useLiveMode(flatData);

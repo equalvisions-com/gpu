@@ -3,6 +3,7 @@ import type { InfiniteQueryResponse, LogsMeta } from "@/components/infinite-tabl
 import type { ColumnSchema } from "@/components/infinite-table/schema";
 import { searchParamsCache } from "@/components/infinite-table/search-params";
 import { pricingCache } from "@/lib/redis";
+import { createHash } from "crypto";
 import {
   filterData,
   getFacetsFromData,
@@ -27,12 +28,35 @@ export async function GET(req: NextRequest): Promise<Response> {
 
     // Flatten all pricing data from all providers
     let totalData: ColumnSchema[] = pricingSnapshots.flatMap((snapshot: any) =>
-      snapshot.rows.map((row: any) => ({
-        uuid: crypto.randomUUID(),
-        ...row,
-        provider: snapshot.provider,
-        observed_at: snapshot.observed_at || snapshot.last_updated,
-      }))
+      snapshot.rows.map((row: any) => {
+        const observedAt = snapshot.observed_at || snapshot.last_updated;
+        const stableKey = [
+          snapshot.provider,
+          row.sku ?? row.item ?? "",
+          row.region ?? "",
+          row.zone ?? "",
+          row.gpu_model ?? "",
+          row.gpu_count ?? "",
+          row.vram_gb ?? "",
+          row.vcpus ?? "",
+          row.system_ram_gb ?? row.ram_gb ?? "",
+          row.local_storage_tb ?? "",
+          row.price_hour_usd ?? row.price_usd ?? "",
+          row.price_unit ?? "",
+          row.class ?? "",
+          row.network ?? "",
+          observedAt ?? "",
+        ].join("|");
+
+        const uuid = createHash("sha256").update(stableKey).digest("hex").slice(0, 16);
+
+        return {
+          uuid,
+          ...row,
+          provider: snapshot.provider,
+          observed_at: observedAt,
+        };
+      })
     );
 
     // Only include GPU class rows (CPUs remain stored but are not displayed)

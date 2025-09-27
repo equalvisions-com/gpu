@@ -191,11 +191,11 @@ export function DataTableInfinite<TData, TValue, TMeta>({
         Math.ceil(e.currentTarget.scrollTop + e.currentTarget.clientHeight) >=
         e.currentTarget.scrollHeight;
 
-      if (onPageBottom && !isFetching && totalRowsFetched < filterRows) {
+      if (onPageBottom && !isFetching && hasNextPage) {
         fetchNextPage();
       }
     },
-    [fetchNextPage, isFetching, filterRows, totalRowsFetched],
+    [fetchNextPage, isFetching, hasNextPage],
   );
 
   React.useEffect(() => {

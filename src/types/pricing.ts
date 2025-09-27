@@ -1,5 +1,5 @@
 // Provider types
-export type Provider = "coreweave" | "nebius" | "hyperstack" | "runpod" | "lambda" | "digitalocean";
+export type Provider = "coreweave" | "nebius" | "hyperstack" | "runpod" | "lambda" | "digitalocean" | "oracle";
 
 // CoreWeave pricing schema
 export type CoreWeavePriceRow = {
@@ -165,8 +165,39 @@ export type DigitalOceanPriceRow = {
   class: "GPU";                // GPU instances only
 };
 
+// Oracle pricing schema
+export type OraclePriceRow = {
+  provider: "oracle";
+  source_url: string;           // https://www.oracle.com/cloud/compute/pricing/
+  observed_at: string;          // ISO timestamp
+
+  // Identification
+  instance_id?: string;         // instance type (e.g., "BM.GPU.B200.8")
+
+  // Hardware
+  gpu_model: string;            // e.g., "NVIDIA B200"
+  gpu_count: number;            // number of GPUs in instance
+  vram_gb: number;              // total VRAM in GB (not per GPU)
+  vcpus: number;                // total vCPUs for the instance
+  system_ram_gb: number;        // total RAM for the instance in GB
+  storage: string;              // storage description
+  network: string;              // network description
+
+  // Architecture
+  architecture: string;         // e.g., "Blackwell", "Hopper"
+  interconnect: string;         // e.g., "NVIDIA NVLINK"
+
+  // Pricing (per instance, calculated from per-GPU pricing)
+  price_unit: "instance_hour";  // per instance-hour (total cost)
+  price_hour_usd: number;       // total instance price per hour
+  raw_cost: string;             // original price text
+
+  // Flags
+  class: "GPU";                // GPU instances only
+};
+
 // Union type for all price rows
-export type PriceRow = CoreWeavePriceRow | NebiusPriceRow | HyperstackPriceRow | RunPodPriceRow | LambdaPriceRow | DigitalOceanPriceRow;
+export type PriceRow = CoreWeavePriceRow | NebiusPriceRow | HyperstackPriceRow | RunPodPriceRow | LambdaPriceRow | DigitalOceanPriceRow | OraclePriceRow;
 
 export type ProviderSnapshot = {
   provider: Provider;
