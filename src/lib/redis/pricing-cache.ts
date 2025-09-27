@@ -32,8 +32,10 @@ export class PricingCache {
     // Create individual instance mappings
     const byInstance: Record<string, PriceRow> = {};
     rows.forEach(row => {
-      if (row.instance_id) {
-        byInstance[row.instance_id] = row;
+      // Use instance_id for CoreWeave, item for Nebius
+      const key = row.instance_id || (row as any).item;
+      if (key) {
+        byInstance[key] = row;
       }
     });
 

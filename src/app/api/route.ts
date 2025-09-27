@@ -35,10 +35,17 @@ export async function GET(req: NextRequest): Promise<Response> {
       }))
     );
 
-    // Filter to only show GPU instances that have gpu_count
+    // Filter to only show GPU instances that have gpu_count or are Nebius GPU items
     totalData = totalData.filter((row) => {
-      // Only keep GPU rows with gpu_count
-      return row.class === 'GPU' && row.gpu_count !== undefined && row.gpu_count !== null;
+      // Keep GPU rows with gpu_count (CoreWeave)
+      if (row.class === 'GPU' && row.gpu_count !== undefined && row.gpu_count !== null) {
+        return true;
+      }
+      // Keep GPU rows from Nebius that have GPU in the item name
+      if (row.provider === 'nebius' && row.class === 'GPU' && row.item) {
+        return true;
+      }
+      return false;
     });
 
     // Apply date filtering if specified

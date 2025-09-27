@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { coreweaveScraper } from '@/lib/providers';
+import { coreweaveScraper, nebiusScraper } from '@/lib/providers';
 import { pricingCache } from '@/lib/redis';
+import type { ProviderScraper } from '@/lib/providers';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30; // Allow up to 30 seconds for scraping
+
+const scrapers: Record<string, ProviderScraper> = {
+  coreweave: coreweaveScraper,
+  nebius: nebiusScraper,
+};
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,18 +19,30 @@ export async function POST(request: NextRequest) {
     //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     // }
 
+    // Get provider from query parameter, default to coreweave
+    const { searchParams } = new URL(request.url);
+    const provider = searchParams.get('provider') || 'coreweave';
+
+    const scraper = scrapers[provider];
+    if (!scraper) {
+      return NextResponse.json({
+        success: false,
+        error: `Unknown provider: ${provider}. Available providers: ${Object.keys(scrapers).join(', ')}`,
+      }, { status: 400 });
+    }
+
     const startTime = Date.now();
 
-    // Run the CoreWeave scraper
-    console.log('Starting CoreWeave scraping job...');
-    const result = await coreweaveScraper.scrape();
+    // Run the scraper
+    console.log(`Starting ${provider} scraping job...`);
+    const result = await scraper.scrape();
 
     // Store the results in Redis (only if content changed)
     const wasUpdated = await pricingCache.storePricingData(result);
 
     const duration = Date.now() - startTime;
 
-    console.log(`CoreWeave scraping completed in ${duration}ms. Updated: ${wasUpdated}`);
+    console.log(`${provider} scraping completed in ${duration}ms. Updated: ${wasUpdated}`);
 
     return NextResponse.json({
       success: true,

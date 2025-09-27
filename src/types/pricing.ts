@@ -1,5 +1,8 @@
-// Canonical schema normalized across all providers
-export type PriceRow = {
+// Provider types
+export type Provider = "coreweave" | "nebius";
+
+// CoreWeave pricing schema
+export type CoreWeavePriceRow = {
   provider: "coreweave";
   source_url: string;           // e.g., https://www.coreweave.com/pricing
   observed_at: string;          // ISO timestamp when you scraped
@@ -31,15 +34,41 @@ export type PriceRow = {
   spot?: boolean;               // marketing page lists on‑demand rates; leave undefined
 };
 
+// Nebius pricing schema
+export type NebiusPriceRow = {
+  provider: "nebius";
+  source_url: string;           // https://nebius.com/prices
+  observed_at: string;          // ISO timestamp
+
+  // Compute identifiers
+  item: string;                 // e.g. "NVIDIA HGX H100" or "AMD EPYC Genoa"
+  class: "GPU" | "CPU";         // GPU or CPU table
+
+  // Hardware
+  gpu_count?: number;           // Always 1 for GPU instances
+
+  // Specs (may be ranges)
+  vcpus: string;                // "16", "8-40", etc.
+  ram_gb: string;               // "200", "32-160", etc.
+
+  // Pricing
+  price_unit: "gpu_hour" | "hour"; // GPU table uses per GPU-hour, CPU uses per hour
+  price_usd?: number;           // numeric price (e.g. 2.95); undefined if "Contact us"
+  raw_cost: string;             // original price string (e.g. "$2.95", "from $1.82", "Contact us")
+};
+
+// Union type for all price rows
+export type PriceRow = CoreWeavePriceRow | NebiusPriceRow;
+
 export type ProviderSnapshot = {
-  provider: "coreweave";
+  provider: Provider;
   version: number;             // monotonic
   last_updated: string;        // ISO (same as observed_at of the scrape run)
   rows: PriceRow[];
 };
 
 export interface ProviderResult {
-  provider: "coreweave";
+  provider: Provider;
   rows: PriceRow[];
   observedAt: string; // ISO timestamp
   sourceHash: string;

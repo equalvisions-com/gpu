@@ -44,10 +44,13 @@ export const columns: ColumnDef<ColumnSchema>[] = [
     accessorKey: "gpu_model",
     header: "GPU Model",
     cell: ({ row }) => {
-      const gpuModel = row.getValue<ColumnSchema["gpu_model"]>("gpu_model");
-      if (!gpuModel) return <Minus className="h-4 w-4 text-muted-foreground/50" />;
+      // Handle both CoreWeave (gpu_model) and Nebius (item) data
+      const original = row.original;
+      const displayName = original.gpu_model || original.item;
 
-      const isNvidia = gpuModel.toLowerCase().includes('nvidia');
+      if (!displayName) return <Minus className="h-4 w-4 text-muted-foreground/50" />;
+
+      const isNvidia = displayName.toLowerCase().includes('nvidia');
 
       return (
         <div className="flex items-center gap-2">
@@ -58,7 +61,7 @@ export const columns: ColumnDef<ColumnSchema>[] = [
               className="h-4 w-4 object-contain"
             />
           )}
-          <span className="font-medium">{gpuModel}</span>
+          <span className="font-medium">{displayName}</span>
         </div>
       );
     },
@@ -118,7 +121,8 @@ export const columns: ColumnDef<ColumnSchema>[] = [
     accessorKey: "system_ram_gb",
     header: "RAM (GB)",
     cell: ({ row }) => {
-      const ramGb = row.getValue<ColumnSchema["system_ram_gb"]>("system_ram_gb");
+      const original = row.original;
+      const ramGb = original.system_ram_gb || original.ram_gb;
       return ramGb ? <span className="font-mono">{ramGb}</span> : <Minus className="h-4 w-4 text-muted-foreground/50" />;
     },
     filterFn: "inNumberRange",
@@ -164,13 +168,20 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       <DataTableColumnHeader column={column} title="Hourly Rate" />
     ),
     cell: ({ row }) => {
-      const priceHourUsd = row.getValue<ColumnSchema["price_hour_usd"]>("price_hour_usd");
-      return priceHourUsd ? (
+      const original = row.original;
+      const price = original.price_hour_usd || original.price_usd;
+      const unit = original.price_unit || "hour";
+
+      if (!price) return <Minus className="h-4 w-4 text-muted-foreground/50" />;
+
+      const unitDisplay = "/hr";
+
+      return (
         <div className="flex items-center gap-1">
-          <span className="font-mono font-medium">${priceHourUsd.toFixed(3)}</span>
-          <span className="text-muted-foreground text-xs">/hr</span>
+          <span className="font-mono font-medium">${price.toFixed(3)}</span>
+          <span className="text-muted-foreground text-xs">{unitDisplay}</span>
         </div>
-      ) : <Minus className="h-4 w-4 text-muted-foreground/50" />;
+      );
     },
     filterFn: "inNumberRange",
     size: 150,
@@ -191,6 +202,13 @@ export const columns: ColumnDef<ColumnSchema>[] = [
             <img
               src="/logos/coreweave.png"
               alt="CoreWeave"
+              className="h-5 w-5"
+            />
+          )}
+          {provider === "nebius" && (
+            <img
+              src="/logos/nebius.png"
+              alt="Nebius"
               className="h-5 w-5"
             />
           )}

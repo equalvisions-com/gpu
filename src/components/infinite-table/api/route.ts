@@ -22,7 +22,7 @@ export async function GET(req: NextRequest): Promise<Response> {
     const search = searchParamsCache.parse(Object.fromEntries(_search));
 
     // Fetch pricing data from our pricing API
-    const pricingResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/pricing`);
+    const pricingResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001'}/api/pricing`);
     if (!pricingResponse.ok) {
       throw new Error(`Failed to fetch pricing data: ${pricingResponse.status}`);
     }
