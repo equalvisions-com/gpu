@@ -10,7 +10,7 @@ import { format } from "date-fns";
 import type { ColumnSchema } from "./schema";
 
 // GPU pricing filter fields
-export const filterFields = [
+export const filterFields: DataTableFilterField<ColumnSchema>[] = [
   {
     label: "Provider",
     value: "provider",
@@ -64,7 +64,7 @@ export const filterFields = [
     min: 0.1,
     max: 50,
   },
-] satisfies DataTableFilterField<ColumnSchema>[];
+];
 
 export const sheetFields = [
   {
