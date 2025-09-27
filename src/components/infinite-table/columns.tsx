@@ -27,16 +27,34 @@ import type { ColumnSchema } from "./schema";
 
 export const columns: ColumnDef<ColumnSchema>[] = [
   {
-    accessorKey: "instance_id",
-    header: "Instance ID",
+    accessorKey: "provider",
+    header: "Provider",
     cell: ({ row }) => {
-      const instanceId = row.getValue<ColumnSchema["instance_id"]>("instance_id");
-      return instanceId ? <TextWithTooltip text={instanceId} /> : <Minus className="h-4 w-4 text-muted-foreground/50" />;
+      const provider = row.getValue<ColumnSchema["provider"]>("provider");
+      return (
+        <div className="flex items-center gap-2">
+          {provider === "coreweave" && (
+            <img
+              src="/logos/coreweave.png"
+              alt="CoreWeave"
+              className="h-5 w-5"
+            />
+          )}
+          {provider === "nebius" && (
+            <img
+              src="/logos/nebius.png"
+              alt="Nebius"
+              className="h-5 w-5"
+            />
+          )}
+          <span className="font-medium capitalize">{provider}</span>
+        </div>
+      );
     },
-    size: 200,
-    minSize: 120,
+    size: 140,
+    minSize: 80,
     meta: {
-      cellClassName: "font-mono font-semibold",
+      cellClassName: "font-medium",
       headerClassName: "",
     },
   },
@@ -70,6 +88,35 @@ export const columns: ColumnDef<ColumnSchema>[] = [
     meta: {
       cellClassName: "",
       headerClassName: "",
+    },
+  },
+  {
+    accessorKey: "price_hour_usd",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Hourly Rate" />
+    ),
+    cell: ({ row }) => {
+      const original = row.original;
+      const price = original.price_hour_usd || original.price_usd;
+      const unit = original.price_unit || "hour";
+
+      if (!price) return <Minus className="h-4 w-4 text-muted-foreground/50" />;
+
+      const unitDisplay = "/hr";
+
+      return (
+        <div className="flex items-center gap-1">
+          <span className="font-mono font-medium">${price.toFixed(3)}</span>
+          <span className="text-muted-foreground text-xs">{unitDisplay}</span>
+        </div>
+      );
+    },
+    filterFn: "inNumberRange",
+    size: 150,
+    minSize: 80,
+    meta: {
+      headerClassName: "",
+      cellClassName: "font-mono",
     },
   },
   {
@@ -163,67 +210,6 @@ export const columns: ColumnDef<ColumnSchema>[] = [
     },
   },
   {
-    accessorKey: "price_hour_usd",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Hourly Rate" />
-    ),
-    cell: ({ row }) => {
-      const original = row.original;
-      const price = original.price_hour_usd || original.price_usd;
-      const unit = original.price_unit || "hour";
-
-      if (!price) return <Minus className="h-4 w-4 text-muted-foreground/50" />;
-
-      const unitDisplay = "/hr";
-
-      return (
-        <div className="flex items-center gap-1">
-          <span className="font-mono font-medium">${price.toFixed(3)}</span>
-          <span className="text-muted-foreground text-xs">{unitDisplay}</span>
-        </div>
-      );
-    },
-    filterFn: "inNumberRange",
-    size: 150,
-    minSize: 80,
-    meta: {
-      headerClassName: "",
-      cellClassName: "font-mono",
-    },
-  },
-  {
-    accessorKey: "provider",
-    header: "Provider",
-    cell: ({ row }) => {
-      const provider = row.getValue<ColumnSchema["provider"]>("provider");
-      return (
-        <div className="flex items-center gap-2">
-          {provider === "coreweave" && (
-            <img
-              src="/logos/coreweave.png"
-              alt="CoreWeave"
-              className="h-5 w-5"
-            />
-          )}
-          {provider === "nebius" && (
-            <img
-              src="/logos/nebius.png"
-              alt="Nebius"
-              className="h-5 w-5"
-            />
-          )}
-          <span className="font-medium capitalize">{provider}</span>
-        </div>
-      );
-    },
-    size: 140,
-    minSize: 80,
-    meta: {
-      cellClassName: "font-medium",
-      headerClassName: "",
-    },
-  },
-  {
     accessorKey: "class",
     header: "Class",
     cell: ({ row }) => {
@@ -268,6 +254,20 @@ export const columns: ColumnDef<ColumnSchema>[] = [
     minSize: 60,
     meta: {
       cellClassName: "",
+      headerClassName: "",
+    },
+  },
+  {
+    accessorKey: "instance_id",
+    header: "Instance ID",
+    cell: ({ row }) => {
+      const instanceId = row.getValue<ColumnSchema["instance_id"]>("instance_id");
+      return instanceId ? <TextWithTooltip text={instanceId} /> : <Minus className="h-4 w-4 text-muted-foreground/50" />;
+    },
+    size: 200,
+    minSize: 120,
+    meta: {
+      cellClassName: "font-mono font-semibold",
       headerClassName: "",
     },
   },
