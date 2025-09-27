@@ -1,5 +1,5 @@
 // Provider types
-export type Provider = "coreweave" | "nebius" | "hyperstack" | "runpod" | "lambda";
+export type Provider = "coreweave" | "nebius" | "hyperstack" | "runpod" | "lambda" | "digitalocean";
 
 // CoreWeave pricing schema
 export type CoreWeavePriceRow = {
@@ -136,8 +136,37 @@ export type LambdaPriceRow = {
   class: "GPU";                // GPU instances only
 };
 
+// DigitalOcean pricing schema
+export type DigitalOceanPriceRow = {
+  provider: "digitalocean";
+  source_url: string;           // https://www.digitalocean.com/pricing/gpu-droplets
+  observed_at: string;          // ISO timestamp
+
+  // Identification
+  instance_id?: string;         // instance type (e.g., "nvidia-h100-x8")
+
+  // Hardware
+  gpu_model: string;            // e.g., "NVIDIA H100"
+  gpu_count: number;            // number of GPUs in droplet (1 or 8)
+  vram_gb: number;              // VRAM per GPU in GB
+  vcpus: number;                // total vCPUs for the droplet
+  system_ram_gb: number;        // total RAM for the droplet in GB
+  storage: string;              // storage description
+
+  // Network
+  transfer_gb?: number;         // transfer allowance in GB
+
+  // Pricing (on-demand only)
+  price_unit: "gpu_hour";      // per GPU-hour
+  price_hour_usd: number;       // price per GPU per hour
+  raw_cost: string;             // original price text
+
+  // Flags
+  class: "GPU";                // GPU instances only
+};
+
 // Union type for all price rows
-export type PriceRow = CoreWeavePriceRow | NebiusPriceRow | HyperstackPriceRow | RunPodPriceRow | LambdaPriceRow;
+export type PriceRow = CoreWeavePriceRow | NebiusPriceRow | HyperstackPriceRow | RunPodPriceRow | LambdaPriceRow | DigitalOceanPriceRow;
 
 export type ProviderSnapshot = {
   provider: Provider;

@@ -70,6 +70,13 @@ export const columns: ColumnDef<ColumnSchema>[] = [
               className="h-5 w-5 rounded"
             />
           )}
+          {provider === "digitalocean" && (
+            <img
+              src="/logos/digitalocean.png"
+              alt="DigitalOcean"
+              className="h-5 w-5 rounded"
+            />
+          )}
           <span className="font-medium capitalize">{provider}</span>
         </div>
       );

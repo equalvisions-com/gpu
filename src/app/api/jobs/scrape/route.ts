@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { coreweaveScraper, nebiusScraper, hyperstackScraper, runpodScraper, lambdaScraper } from '@/lib/providers';
+import { coreweaveScraper, nebiusScraper, hyperstackScraper, runpodScraper, lambdaScraper, digitaloceanScraper } from '@/lib/providers';
 import { pricingCache } from '@/lib/redis';
 import type { ProviderScraper } from '@/lib/providers';
 
@@ -12,6 +12,7 @@ const scrapers: Record<string, ProviderScraper> = {
   hyperstack: hyperstackScraper,
   runpod: runpodScraper,
   lambda: lambdaScraper,
+  digitalocean: digitaloceanScraper,
 };
 
 export async function POST(request: NextRequest) {
