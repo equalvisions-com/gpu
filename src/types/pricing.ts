@@ -157,8 +157,8 @@ export type DigitalOceanPriceRow = {
   transfer_gb?: number;         // transfer allowance in GB
 
   // Pricing (on-demand only)
-  price_unit: "gpu_hour";      // per GPU-hour
-  price_hour_usd: number;       // price per GPU per hour
+  price_unit: "gpu_hour" | "instance_hour";  // per GPU-hour or per instance-hour for multi-GPU
+  price_hour_usd: number;       // price per GPU per hour or total instance price
   raw_cost: string;             // original price text
 
   // Flags
