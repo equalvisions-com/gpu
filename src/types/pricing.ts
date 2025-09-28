@@ -1,5 +1,5 @@
 // Provider types
-export type Provider = "coreweave" | "nebius" | "hyperstack" | "runpod" | "lambda" | "digitalocean" | "oracle";
+export type Provider = "coreweave" | "nebius" | "hyperstack" | "runpod" | "lambda" | "digitalocean" | "oracle" | "crusoe";
 
 // CoreWeave pricing schema
 export type CoreWeavePriceRow = {
@@ -196,8 +196,37 @@ export type OraclePriceRow = {
   class: "GPU";                // GPU instances only
 };
 
+// Crusoe pricing schema
+export type CrusoePriceRow = {
+  provider: "crusoe";
+  source_url: string;           // https://www.crusoe.ai/cloud/pricing
+  observed_at: string;          // ISO timestamp
+
+  // Identification
+  instance_id?: string;         // GPU model identifier (e.g., "NVIDIA B200")
+
+  // Hardware
+  gpu_model: string;            // e.g., "NVIDIA B200"
+  gpu_count: number;            // always 1 for Crusoe (single GPU instances)
+  vram_gb: number;              // VRAM per GPU in GB
+  gpu_interface: string;        // e.g., "SXM", "PCIe"
+
+  // System specs (from research/mapping)
+  vcpus: number;                // CPU cores for the instance
+  system_ram_gb: number;        // RAM for the instance in GB
+
+  // Pricing (on-demand only)
+  price_unit: "gpu_hour";      // per GPU-hour
+  price_hour_usd?: number;      // price per GPU per hour (undefined for contact sales)
+  contact_sales?: boolean;      // true if pricing requires contacting sales
+  raw_cost: string;             // original price text
+
+  // Flags
+  class: "GPU";                // GPU instances only
+};
+
 // Union type for all price rows
-export type PriceRow = CoreWeavePriceRow | NebiusPriceRow | HyperstackPriceRow | RunPodPriceRow | LambdaPriceRow | DigitalOceanPriceRow | OraclePriceRow;
+export type PriceRow = CoreWeavePriceRow | NebiusPriceRow | HyperstackPriceRow | RunPodPriceRow | LambdaPriceRow | DigitalOceanPriceRow | OraclePriceRow | CrusoePriceRow;
 
 export type ProviderSnapshot = {
   provider: Provider;

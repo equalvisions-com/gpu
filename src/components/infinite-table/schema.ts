@@ -11,7 +11,7 @@ export const columnSchema = z.object({
   uuid: z.string(),
 
   // Core identification (from PriceRow)
-  provider: z.enum(["coreweave", "nebius", "hyperstack", "runpod", "lambda", "digitalocean", "oracle"]),
+  provider: z.enum(["coreweave", "nebius", "hyperstack", "runpod", "lambda", "digitalocean", "oracle", "crusoe"]),
   source_url: z.string(),
   observed_at: z.string(),
   item: z.string().optional(), // For Nebius data
