@@ -315,7 +315,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
       getFacetedMinMaxValues={getFacetedMinMaxValues}
     >
       <div
-        className="flex h-full min-h-screen w-full flex-col sm:flex-row"
+        className="flex h-full w-full flex-col sm:flex-row"
         style={
           {
             "--top-bar-height": `${topBarHeight}px`,
@@ -535,7 +535,7 @@ function Row<TData>({
         <TableCell
           key={cell.id}
           className={cn(
-            "truncate border-b border-border",
+            "truncate border-b border-border p-3",
             cell.column.columnDef.meta?.cellClassName,
           )}
           style={{
