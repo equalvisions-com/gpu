@@ -195,7 +195,7 @@ export class OracleScraper implements ProviderScraper {
         price_hour_usd: priceHourUsd,
         raw_cost: rawCost,
         class: 'GPU',
-        type: shape.startsWith('BM') ? 'Bare Metal' : shape.startsWith('VM') ? 'VM' : undefined,
+        type: shape.startsWith('BM') ? 'Bare Metal' : shape.startsWith('VM') ? 'Virtual Machine' : undefined,
       });
 
       console.log(`Added Oracle ${shape}: ${gpuModel} (${gpuCount}x), $${priceHourUsd}/hr`);

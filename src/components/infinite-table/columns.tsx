@@ -20,7 +20,6 @@ import {
 import { cn } from "@/lib/utils";
 import { HoverCardPortal } from "@radix-ui/react-hover-card";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Minus } from "lucide-react";
 import { HoverCardTimestamp } from "./_components/hover-card-timestamp";
 import type { ColumnSchema } from "./schema";
 
@@ -112,7 +111,7 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       const original = row.original;
       const displayName = original.gpu_model || original.item;
 
-      if (!displayName) return <Minus className="h-4 w-4 text-muted-foreground/50" />;
+      if (!displayName) return <span className="text-muted-foreground">N/A</span>;
 
       return (
         <span className="font-medium">{displayName}</span>
@@ -126,23 +125,6 @@ export const columns: ColumnDef<ColumnSchema>[] = [
     },
   },
   {
-    accessorKey: "gpu_count",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="GPUs" />
-    ),
-    cell: ({ row }) => {
-      const gpuCount = row.getValue<ColumnSchema["gpu_count"]>("gpu_count");
-      return gpuCount ? <span className="font-mono font-medium">{gpuCount}x</span> : <Minus className="h-4 w-4 text-muted-foreground/50" />;
-    },
-    filterFn: "inNumberRange",
-    size: 85,
-    minSize: 50,
-    meta: {
-      cellClassName: "font-mono",
-      headerClassName: "text-center",
-    },
-  },
-  {
     accessorKey: "price_hour_usd",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Price" />
@@ -152,23 +134,45 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       const price = original.price_hour_usd || original.price_usd;
       const unit = original.price_unit || "hour";
 
-      if (!price) return <Minus className="h-4 w-4 text-muted-foreground/50" />;
-
-      const unitDisplay = "/hr";
+      if (!price) return <span className="text-muted-foreground">N/A</span>;
 
       return (
-        <div className="flex items-center gap-1">
-          <span className="font-mono font-medium">${price.toFixed(2)}</span>
-          <span className="text-muted-foreground text-xs">{unitDisplay}</span>
-        </div>
+        <>
+          <span className="font-mono font-medium">${price.toFixed(2)}</span>{" "}
+          <span className="font-mono text-muted-foreground">/HR</span>
+        </>
       );
     },
     filterFn: "inNumberRange",
-    size: 105,
-    minSize: 60,
+    size: 60,
+    minSize: 45,
     meta: {
       headerClassName: "text-center",
-      cellClassName: "font-mono",
+      cellClassName: "text-center",
+    },
+  },
+  {
+    accessorKey: "gpu_count",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Config" />
+    ),
+    cell: ({ row }) => {
+      const gpuCount = row.getValue<ColumnSchema["gpu_count"]>("gpu_count");
+      if (!gpuCount) return <span className="text-muted-foreground">N/A</span>;
+
+      return (
+        <>
+          <span className="font-mono font-medium">{gpuCount}</span>{" "}
+          <span className="text-muted-foreground">{gpuCount === 1 ? 'GPU' : 'GPUs'}</span>
+        </>
+      );
+    },
+    filterFn: "inNumberRange",
+    size: 45,
+    minSize: 35,
+    meta: {
+      cellClassName: "text-center",
+      headerClassName: "text-center",
     },
   },
   {
@@ -179,17 +183,17 @@ export const columns: ColumnDef<ColumnSchema>[] = [
     cell: ({ row }) => {
       const vramGb = row.getValue<ColumnSchema["vram_gb"]>("vram_gb");
       return vramGb ? (
-        <div className="flex items-center gap-1">
-          <span className="font-mono">{vramGb}</span>
-          <span className="text-muted-foreground text-xs">GB</span>
-        </div>
-      ) : <Minus className="h-4 w-4 text-muted-foreground/50" />;
+        <>
+          <span className="font-mono">{vramGb}</span>{" "}
+          <span className="text-muted-foreground">GB</span>
+        </>
+      ) : <span className="text-muted-foreground">N/A</span>;
     },
     filterFn: "inNumberRange",
     size: 85,
     minSize: 50,
     meta: {
-      cellClassName: "font-mono",
+      cellClassName: "text-center",
       headerClassName: "text-center",
     },
   },
@@ -200,13 +204,20 @@ export const columns: ColumnDef<ColumnSchema>[] = [
     ),
     cell: ({ row }) => {
       const vcpus = row.getValue<ColumnSchema["vcpus"]>("vcpus");
-      return vcpus ? <span className="font-mono">{vcpus}</span> : <Minus className="h-4 w-4 text-muted-foreground/50" />;
+      if (!vcpus) return <span className="text-muted-foreground">N/A</span>;
+
+      return (
+        <>
+          <span className="font-mono font-medium">{vcpus}</span>{" "}
+          <span className="text-muted-foreground">vCPUs</span>
+        </>
+      );
     },
     filterFn: "inNumberRange",
     size: 75,
     minSize: 45,
     meta: {
-      cellClassName: "font-mono",
+      cellClassName: "text-center",
       headerClassName: "text-center",
     },
   },
@@ -219,17 +230,17 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       const original = row.original;
       const ramGb = original.system_ram_gb || original.ram_gb;
       return ramGb ? (
-        <div className="flex items-center gap-1">
-          <span className="font-mono">{ramGb}</span>
-          <span className="text-muted-foreground text-xs">GB</span>
-        </div>
-      ) : <Minus className="h-4 w-4 text-muted-foreground/50" />;
+        <>
+          <span className="font-mono">{ramGb}</span>{" "}
+          <span className="text-muted-foreground">GB</span>
+        </>
+      ) : <span className="text-muted-foreground">N/A</span>;
     },
     filterFn: "inNumberRange",
     size: 85,
     minSize: 50,
     meta: {
-      cellClassName: "font-mono",
+      cellClassName: "text-center",
       headerClassName: "text-center",
     },
   },
@@ -240,7 +251,7 @@ export const columns: ColumnDef<ColumnSchema>[] = [
     ),
     cell: ({ row }) => {
       const type = row.getValue<ColumnSchema["type"]>("type");
-      return type ? <span className="font-medium">{type}</span> : <Minus className="h-4 w-4 text-muted-foreground/50" />;
+      return type ? <span className="font-medium">{type}</span> : <span className="text-muted-foreground">N/A</span>;
     },
     size: 85,
     minSize: 50,

@@ -163,7 +163,7 @@ export class DigitalOceanScraper implements ProviderScraper {
         price_hour_usd: priceHourUsd,
         raw_cost: `$${priceHourUsd.toFixed(2)}`,
         class: 'GPU',
-        type: 'VM',
+        type: 'Virtual Machine',
       });
 
       console.log(`Added DigitalOcean ${gpuName}: $${priceHourUsd.toFixed(2)}/hr (${gpuCount} GPU${gpuCount > 1 ? 's' : ''})`);

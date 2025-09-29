@@ -535,7 +535,7 @@ function Row<TData>({
         <TableCell
           key={cell.id}
           className={cn(
-            "truncate border-b border-border p-3",
+            "truncate border-b border-border p-[10px]",
             cell.column.columnDef.meta?.cellClassName,
           )}
           style={{

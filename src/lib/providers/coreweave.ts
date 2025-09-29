@@ -163,7 +163,7 @@ export class CoreWeaveScraper implements ProviderScraper {
           raw_cost: priceText,
           class: 'GPU',
           network,
-          type: 'VM',
+          type: 'Virtual Machine',
         };
 
         rows.push(priceRow);
@@ -238,7 +238,7 @@ export class CoreWeaveScraper implements ProviderScraper {
           raw_cost: priceText,
           class: 'CPU',
           network: 'Unknown',
-          type: 'VM',
+          type: 'Virtual Machine',
         };
 
         rows.push(priceRow);

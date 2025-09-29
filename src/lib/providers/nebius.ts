@@ -153,7 +153,7 @@ export class NebiusScraper implements ProviderScraper {
         price_unit: instanceClass === 'GPU' ? 'gpu_hour' : 'hour',
         price_usd: parsePrice(priceText),
         raw_cost: priceText,
-        type: 'VM',
+        type: 'Virtual Machine',
       };
 
       rows.push(priceRow);
