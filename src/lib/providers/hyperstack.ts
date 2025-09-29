@@ -107,6 +107,7 @@ export class HyperstackScraper implements ProviderScraper {
           raw_cost: priceText,
           class: 'GPU',
           network: 'Unknown',
+          type: 'VM',
         };
 
         rows.push(row);

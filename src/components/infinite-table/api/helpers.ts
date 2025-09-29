@@ -20,7 +20,6 @@ export const sliderFilterValues = [
   "vram_gb",
   "vcpus",
   "system_ram_gb",
-  "local_storage_tb",
   "price_hour_usd",
 ] as const satisfies (keyof ColumnSchema)[];
 
@@ -41,8 +40,8 @@ export function filterData(
       const filter = filters[key as keyof typeof filters];
       if (filter === undefined || filter === null) continue;
 
-      // Handle slider filters (gpu_count, vram_gb, vcpus, system_ram_gb, local_storage_tb, price_hour_usd)
-      if ((key === "gpu_count" || key === "vram_gb" || key === "vcpus" || key === "system_ram_gb" || key === "local_storage_tb" || key === "price_hour_usd") && isArrayOfNumbers(filter)) {
+      // Handle slider filters (gpu_count, vram_gb, vcpus, system_ram_gb, price_hour_usd)
+      if ((key === "gpu_count" || key === "vram_gb" || key === "vcpus" || key === "system_ram_gb" || key === "price_hour_usd") && isArrayOfNumbers(filter)) {
         const value = row[key];
         if (typeof value !== 'number') continue;
 

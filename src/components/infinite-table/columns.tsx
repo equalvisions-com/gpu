@@ -95,8 +95,8 @@ export const columns: ColumnDef<ColumnSchema>[] = [
         </div>
       );
     },
-    size: 100,
-    minSize: 60,
+    size: 130,
+    minSize: 80,
     meta: {
       cellClassName: "font-medium",
       headerClassName: "text-center",
@@ -105,7 +105,7 @@ export const columns: ColumnDef<ColumnSchema>[] = [
   {
     accessorKey: "gpu_model",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="GPU Model" />
+      <DataTableColumnHeader column={column} title="Model" />
     ),
     cell: ({ row }) => {
       // Handle both CoreWeave (gpu_model) and Nebius (item) data
@@ -118,17 +118,34 @@ export const columns: ColumnDef<ColumnSchema>[] = [
         <span className="font-medium">{displayName}</span>
       );
     },
-    size: 230,
-    minSize: 80,
+    size: 260,
+    minSize: 100,
     meta: {
       cellClassName: "",
       headerClassName: "text-center",
     },
   },
   {
+    accessorKey: "gpu_count",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="GPUs" />
+    ),
+    cell: ({ row }) => {
+      const gpuCount = row.getValue<ColumnSchema["gpu_count"]>("gpu_count");
+      return gpuCount ? <span className="font-mono font-medium">{gpuCount}x</span> : <Minus className="h-4 w-4 text-muted-foreground/50" />;
+    },
+    filterFn: "inNumberRange",
+    size: 85,
+    minSize: 50,
+    meta: {
+      cellClassName: "font-mono",
+      headerClassName: "text-center",
+    },
+  },
+  {
     accessorKey: "price_hour_usd",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Hourly Rate" />
+      <DataTableColumnHeader column={column} title="Price" />
     ),
     cell: ({ row }) => {
       const original = row.original;
@@ -147,28 +164,11 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       );
     },
     filterFn: "inNumberRange",
-    size: 147,
-    minSize: 80,
-    meta: {
-      headerClassName: "text-center",
-      cellClassName: "font-mono",
-    },
-  },
-  {
-    accessorKey: "gpu_count",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="GPU Count" />
-    ),
-    cell: ({ row }) => {
-      const gpuCount = row.getValue<ColumnSchema["gpu_count"]>("gpu_count");
-      return gpuCount ? <span className="font-mono font-medium">{gpuCount}x</span> : <Minus className="h-4 w-4 text-muted-foreground/50" />;
-    },
-    filterFn: "inNumberRange",
-    size: 117,
+    size: 105,
     minSize: 60,
     meta: {
-      cellClassName: "font-mono",
       headerClassName: "text-center",
+      cellClassName: "font-mono",
     },
   },
   {
@@ -186,8 +186,8 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       ) : <Minus className="h-4 w-4 text-muted-foreground/50" />;
     },
     filterFn: "inNumberRange",
-    size: 117,
-    minSize: 60,
+    size: 85,
+    minSize: 50,
     meta: {
       cellClassName: "font-mono",
       headerClassName: "text-center",
@@ -203,8 +203,8 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       return vcpus ? <span className="font-mono">{vcpus}</span> : <Minus className="h-4 w-4 text-muted-foreground/50" />;
     },
     filterFn: "inNumberRange",
-    size: 97,
-    minSize: 50,
+    size: 75,
+    minSize: 45,
     meta: {
       cellClassName: "font-mono",
       headerClassName: "text-center",
@@ -226,32 +226,26 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       ) : <Minus className="h-4 w-4 text-muted-foreground/50" />;
     },
     filterFn: "inNumberRange",
-    size: 107,
-    minSize: 60,
+    size: 85,
+    minSize: 50,
     meta: {
       cellClassName: "font-mono",
       headerClassName: "text-center",
     },
   },
   {
-    accessorKey: "local_storage_tb",
+    accessorKey: "type",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Storage" />
+      <DataTableColumnHeader column={column} title="Type" />
     ),
     cell: ({ row }) => {
-      const storageTb = row.getValue<ColumnSchema["local_storage_tb"]>("local_storage_tb");
-      return storageTb ? (
-        <div className="flex items-center gap-1">
-          <span className="font-mono">{storageTb}</span>
-          <span className="text-muted-foreground text-xs">TB</span>
-        </div>
-      ) : <Minus className="h-4 w-4 text-muted-foreground/50" />;
+      const type = row.getValue<ColumnSchema["type"]>("type");
+      return type ? <span className="font-medium">{type}</span> : <Minus className="h-4 w-4 text-muted-foreground/50" />;
     },
-    filterFn: "inNumberRange",
-    size: 127,
-    minSize: 70,
+    size: 85,
+    minSize: 50,
     meta: {
-      cellClassName: "font-mono",
+      cellClassName: "text-center",
       headerClassName: "text-center",
     },
   },

@@ -99,7 +99,10 @@ export class CoreWeaveScraper implements ProviderScraper {
         const instanceId = link.attr('data-product');
 
         // GPU model name
-        const modelName = $row.find('.table-v2-cell--name .table-model-name').first().text().trim();
+        let modelName = $row.find('.table-v2-cell--name .table-model-name').first().text().trim();
+
+        // Clean up GPU model name: remove "Server Edition" suffix
+        modelName = modelName.replace(/\s+Server Edition$/i, '').trim();
 
         // Price extraction
         const priceText = $row.find('.table-meta-value').first().text().trim();
@@ -160,6 +163,7 @@ export class CoreWeaveScraper implements ProviderScraper {
           raw_cost: priceText,
           class: 'GPU',
           network,
+          type: 'VM',
         };
 
         rows.push(priceRow);
@@ -234,6 +238,7 @@ export class CoreWeaveScraper implements ProviderScraper {
           raw_cost: priceText,
           class: 'CPU',
           network: 'Unknown',
+          type: 'VM',
         };
 
         rows.push(priceRow);

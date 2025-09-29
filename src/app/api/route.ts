@@ -40,7 +40,6 @@ export async function GET(req: NextRequest): Promise<Response> {
           row.vram_gb ?? "",
           row.vcpus ?? "",
           row.system_ram_gb ?? row.ram_gb ?? "",
-          row.local_storage_tb ?? "",
           row.price_hour_usd ?? row.price_usd ?? "",
           row.price_unit ?? "",
           row.class ?? "",

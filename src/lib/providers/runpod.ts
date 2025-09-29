@@ -112,6 +112,7 @@ export class RunPodScraper implements ProviderScraper {
             price_hour_usd: price,
             raw_cost: `$${price.toFixed(2)}`,
             class: 'GPU',
+            type: 'VM',
           });
         }
       }

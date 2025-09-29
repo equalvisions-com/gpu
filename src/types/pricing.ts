@@ -32,6 +32,7 @@ export type CoreWeavePriceRow = {
   class: "GPU" | "CPU" | "service"; // "GPU" if GPU Count is present, "CPU" if not, or "service" for NAT/VPC/Data Transfer rows
   network?: "InfiniBand" | "Ethernet" | "Unknown"; // hint from name/ID (contains "IB" => InfiniBand)
   spot?: boolean;               // marketing page lists on‑demand rates; leave undefined
+  type?: "VM" | "Bare Metal";    // instance type
 };
 
 // Nebius pricing schema
@@ -55,6 +56,9 @@ export type NebiusPriceRow = {
   price_unit: "gpu_hour" | "hour"; // GPU table uses per GPU-hour, CPU uses per hour
   price_usd?: number;           // numeric price (e.g. 2.95); undefined if "Contact us"
   raw_cost: string;             // original price string (e.g. "$2.95", "from $1.82", "Contact us")
+
+  // Flags
+  type?: "VM" | "Bare Metal";   // instance type
 };
 
 // (moved final union below to include Hyperstack)
@@ -83,6 +87,7 @@ export type HyperstackPriceRow = {
   // Flags
   class: "GPU";                // On-demand GPU rows only
   network?: "InfiniBand" | "Ethernet" | "Unknown"; // not specified
+  type?: "VM" | "Bare Metal";   // instance type
 };
 
 // RunPod pricing schema
@@ -108,6 +113,7 @@ export type RunPodPriceRow = {
 
   // Flags
   class: "GPU";                // GPU instances only
+  type?: "VM" | "Bare Metal";   // instance type
 };
 
 // Lambda pricing schema
@@ -134,6 +140,7 @@ export type LambdaPriceRow = {
 
   // Flags
   class: "GPU";                // GPU instances only
+  type?: "VM" | "Bare Metal";   // instance type
 };
 
 // DigitalOcean pricing schema
@@ -163,6 +170,7 @@ export type DigitalOceanPriceRow = {
 
   // Flags
   class: "GPU";                // GPU instances only
+  type?: "VM" | "Bare Metal";   // instance type
 };
 
 // Oracle pricing schema
@@ -194,6 +202,7 @@ export type OraclePriceRow = {
 
   // Flags
   class: "GPU";                // GPU instances only
+  type?: "VM" | "Bare Metal";   // instance type (BM = Bare Metal, VM = VM)
 };
 
 // Crusoe pricing schema
@@ -223,6 +232,7 @@ export type CrusoePriceRow = {
 
   // Flags
   class: "GPU";                // GPU instances only
+  type?: "VM" | "Bare Metal";   // instance type
 };
 
 // Union type for all price rows

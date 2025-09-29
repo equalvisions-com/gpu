@@ -40,7 +40,6 @@ export const searchParamsParser = {
   vram_gb: parseAsArrayOf(parseAsInteger, SLIDER_DELIMITER),
   vcpus: parseAsArrayOf(parseAsInteger, SLIDER_DELIMITER),
   system_ram_gb: parseAsArrayOf(parseAsInteger, SLIDER_DELIMITER),
-  local_storage_tb: parseAsArrayOf(parseAsFloat, SLIDER_DELIMITER),
   price_hour_usd: parseAsArrayOf(parseAsFloat, SLIDER_DELIMITER),
   observed_at: parseAsArrayOf(parseAsTimestamp, RANGE_DELIMITER),
   // REQUIRED FOR SORTING & PAGINATION

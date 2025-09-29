@@ -148,6 +148,7 @@ export class CrusoeScraper implements ProviderScraper {
         ...(isContactSales ? { contact_sales: true } : { price_hour_usd: priceHourUsd }),
         raw_cost: priceText,
         class: 'GPU',
+        type: 'VM',
       });
 
       console.log(`Added Crusoe ${gpuName}: ${gpuModel} (${vramGb}GB ${gpuInterface}) - ${isContactSales ? 'Contact Sales' : `$${priceHourUsd}/hr`}`);

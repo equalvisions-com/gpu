@@ -146,6 +146,7 @@ export class LambdaScraper implements ProviderScraper {
           price_hour_usd: priceHourUsd,
           raw_cost: priceText,
           class: 'GPU',
+          type: 'VM',
         });
       });
     });

@@ -79,8 +79,8 @@ export class DigitalOceanScraper implements ProviderScraper {
         return;
       }
 
-      // Clean up the GPU name: remove trademark symbols, ×count suffixes, and "generation"
-      gpuName = gpuName.replace(/™/g, '').replace(/×\d+$/, '').replace(/\s+generation$/i, '').trim();
+      // Clean up the GPU name: remove trademark symbols, ×count suffixes, "generation", and "Instinct" from AMD names
+      gpuName = gpuName.replace(/™/g, '').replace(/×\d+$/, '').replace(/\s+generation$/i, '').replace(/\s+Instinct\s+/i, ' ').trim();
 
       // Extract specifications from the list items using the specific span structure
       const specs: { [key: string]: string } = {};
@@ -163,6 +163,7 @@ export class DigitalOceanScraper implements ProviderScraper {
         price_hour_usd: priceHourUsd,
         raw_cost: `$${priceHourUsd.toFixed(2)}`,
         class: 'GPU',
+        type: 'VM',
       });
 
       console.log(`Added DigitalOcean ${gpuName}: $${priceHourUsd.toFixed(2)}/hr (${gpuCount} GPU${gpuCount > 1 ? 's' : ''})`);

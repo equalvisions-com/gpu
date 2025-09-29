@@ -40,6 +40,7 @@ export const columnSchema = z.object({
   spot: z.boolean().optional(),
   class: z.enum(["GPU", "CPU", "service"]).optional(),
   network: z.enum(["InfiniBand", "Ethernet", "Unknown"]).optional(),
+  type: z.enum(["VM", "Bare Metal"]).optional(),
 
   // Computed fields
   percentile: z.number().optional(),
@@ -73,11 +74,6 @@ export const columnFilterSchema = z.object({
     .transform((val) => val.split(SLIDER_DELIMITER))
     .pipe(z.coerce.number().array().max(2))
     .optional(),
-  local_storage_tb: z
-    .string()
-    .transform((val) => val.split(SLIDER_DELIMITER))
-    .pipe(z.coerce.number().array().max(2))
-    .optional(),
   price_hour_usd: z
     .string()
     .transform((val) => val.split(SLIDER_DELIMITER))
@@ -90,6 +86,7 @@ export const columnFilterSchema = z.object({
     .optional(),
   class: z.enum(["GPU", "CPU", "service"]).optional(),
   network: z.enum(["InfiniBand", "Ethernet", "Unknown"]).optional(),
+  type: z.enum(["VM", "Bare Metal"]).optional(),
 });
 
 export type ColumnFilterSchema = z.infer<typeof columnFilterSchema>;

@@ -51,13 +51,6 @@ export const filterFields: DataTableFilterField<ColumnSchema>[] = [
     max: 4096,
   },
   {
-    label: "Local Storage (TB)",
-    value: "local_storage_tb",
-    type: "slider",
-    min: 0.1,
-    max: 100,
-  },
-  {
     label: "Hourly Rate ($)",
     value: "price_hour_usd",
     type: "slider",
@@ -128,17 +121,6 @@ export const sheetFields = [
     component: (props) => (
       <span className="font-mono font-medium">
         {props.system_ram_gb ? `${props.system_ram_gb}GB` : 'N/A'}
-      </span>
-    ),
-    skeletonClassName: "w-20",
-  },
-  {
-    id: "local_storage_tb",
-    label: "Local Storage",
-    type: "readonly",
-    component: (props) => (
-      <span className="font-mono font-medium">
-        {props.local_storage_tb ? `${props.local_storage_tb}TB` : 'N/A'}
       </span>
     ),
     skeletonClassName: "w-20",
