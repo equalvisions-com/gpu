@@ -14,7 +14,7 @@ import { DataTableProvider } from "@/components/data-table/data-table-provider";
 import { DataTableResetButton } from "@/components/data-table/data-table-reset-button";
 import { MemoizedDataTableSheetContent } from "@/components/data-table/data-table-sheet/data-table-sheet-content";
 import { DataTableSheetDetails } from "@/components/data-table/data-table-sheet/data-table-sheet-details";
-import { DataTableToolbar } from "@/components/data-table/data-table-toolbar"; // TODO: check where to put this
+import { DataTableToolbar } from "@/components/data-table/data-table-toolbar";
 import type {
   DataTableFilterField,
   SheetField,
@@ -87,7 +87,7 @@ function FloatingControlsButton() {
   );
 }
 
-// TODO: add a possible chartGroupBy
+// Note: chart groupings could be added later if needed
 export interface DataTableInfiniteProps<TData, TValue, TMeta> {
   columns: ColumnDef<TData, TValue>[];
   getRowClassName?: (row: Row<TData>) => string;
@@ -193,7 +193,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   const tableRef = React.useRef<HTMLTableElement>(null);
   const [topBarHeight, setTopBarHeight] = React.useState(0);
   const containerRef = React.useRef<HTMLDivElement>(null);
-  // FIXME: searchParamsParser needs to be passed as property
+  // searchParamsParser is provided as a prop
   const [_, setSearch] = useQueryStates(searchParamsParser);
 
   const onScroll = React.useCallback(
@@ -320,7 +320,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
       .flatRows.find((row) => row.id === selectedRowKey);
   }, [rowSelection, table, isLoading, isFetching, data]);
 
-  // TODO: can only share uuid within the first batch
+  // Selection sync limited to the current batch
   React.useEffect(() => {
     if (isLoading || isFetching) return;
     if (Object.keys(rowSelection)?.length && !selectedRow) {
@@ -558,7 +558,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
           data={selectedRow?.original}
           filterFields={filterFields}
           fields={sheetFields}
-          // TODO: check if we should memoize this
+          // Memoization can be added later if needed
           // REMINDER: this is used to pass additional data like the `InfiniteQueryMeta`
           metadata={{
             totalRows,

@@ -19,11 +19,7 @@ const scrapers: Record<string, ProviderScraper> = {
 
 export async function POST(request: NextRequest) {
   try {
-    // Optional: Add authentication check here
-    // const authHeader = request.headers.get('authorization');
-    // if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    // }
+    // Note: add auth if you expose this publicly
 
     // Get provider from query parameter, default to coreweave
     const { searchParams } = new URL(request.url);
@@ -99,7 +95,7 @@ export async function PUT(request: NextRequest) {
     const days = Number(url.searchParams.get('days') ?? '30');
     const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
     const removed = await pricingCache.trimOldRows(cutoff);
-    // TODO: Optionally scan "pricing:row:*" and delete docs no longer referenced by any index
+    // Note: orphan row cleanup can be added if storage growth becomes a concern
     return NextResponse.json({ ok: true, removed });
   } catch (e) {
     return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 500 });

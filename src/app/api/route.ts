@@ -1,7 +1,9 @@
 import { NextRequest } from "next/server";
 import type { InfiniteQueryResponse, LogsMeta } from "@/components/infinite-table/query-options";
 import type { ColumnSchema } from "@/components/infinite-table/schema";
+import type { RowId, RowWithId } from "@/types/api";
 import { searchParamsCache } from "@/components/infinite-table/search-params";
+import type { SearchParamsType } from "@/components/infinite-table/search-params";
 import { pricingCache } from "@/lib/redis";
 import { createHash } from "crypto";
 import { filterData, getFacetsFromData, percentileData, sliderFilterValues, sortData } from "@/components/infinite-table/api/helpers";
@@ -10,11 +12,11 @@ export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest): Promise<Response> {
   try {
-    // TODO: we could use a POST request to avoid this
+    // Note: using GET for simplicity; consider POST if query size grows
     const _search: Map<string, string> = new Map();
     req.nextUrl.searchParams.forEach((value, key) => _search.set(key, value));
 
-    const search = searchParamsCache.parse(Object.fromEntries(_search));
+    const search: SearchParamsType = searchParamsCache.parse(Object.fromEntries(_search));
 
     // Simpler path (≤1k rows): read snapshots, flatten, filter/sort/slice in memory
 
@@ -22,23 +24,39 @@ export async function GET(req: NextRequest): Promise<Response> {
     const pricingSnapshots = await pricingCache.getAllPricingSnapshots();
 
     // Flatten all pricing data from all providers
-    let totalData: ColumnSchema[] = pricingSnapshots.flatMap((snapshot: any) =>
-      snapshot.rows.map((row: any) => {
-        const observedAt = snapshot.observed_at || snapshot.last_updated;
+    let totalData: RowWithId[] = pricingSnapshots.flatMap((snapshot) =>
+      snapshot.rows.map((row) => {
+        const observedAt = snapshot.last_updated;
+        const sku = "sku" in row ? row.sku : undefined;
+        const item = "item" in row ? row.item : undefined;
+        const region = "region" in row ? (row as any).region : undefined;
+        const zone = "zone" in row ? (row as any).zone : undefined;
+        const gpu_model = "gpu_model" in row ? (row as any).gpu_model : undefined;
+        const gpu_count = "gpu_count" in row ? (row as any).gpu_count : undefined;
+        const vram_gb = "vram_gb" in row ? (row as any).vram_gb : undefined;
+        const vcpus = "vcpus" in row ? (row as any).vcpus : undefined;
+        const system_ram_gb = "system_ram_gb" in row ? (row as any).system_ram_gb : undefined;
+        const ram_gb = "ram_gb" in row ? (row as any).ram_gb : undefined;
+        const price_hour_usd = "price_hour_usd" in row ? (row as any).price_hour_usd : undefined;
+        const price_usd = "price_usd" in row ? (row as any).price_usd : undefined;
+        const price_unit = (row as any).price_unit;
+        const klass = row.class;
+        const network = "network" in row ? (row as any).network : undefined;
+
         const stableKey = [
           snapshot.provider,
-          row.sku ?? row.item ?? "",
-          row.region ?? "",
-          row.zone ?? "",
-          row.gpu_model ?? "",
-          row.gpu_count ?? "",
-          row.vram_gb ?? "",
-          row.vcpus ?? "",
-          row.system_ram_gb ?? row.ram_gb ?? "",
-          row.price_hour_usd ?? row.price_usd ?? "",
-          row.price_unit ?? "",
-          row.class ?? "",
-          row.network ?? "",
+          sku ?? item ?? "",
+          region ?? "",
+          zone ?? "",
+          gpu_model ?? "",
+          gpu_count ?? "",
+          vram_gb ?? "",
+          vcpus ?? "",
+          system_ram_gb ?? ram_gb ?? "",
+          price_hour_usd ?? price_usd ?? "",
+          price_unit ?? "",
+          klass ?? "",
+          network ?? "",
           observedAt ?? "",
         ].join("|");
 
@@ -46,10 +64,10 @@ export async function GET(req: NextRequest): Promise<Response> {
 
         return {
           uuid,
-          ...row,
+          ...(row as any),
           provider: snapshot.provider,
           observed_at: observedAt,
-        };
+        } as RowWithId;
       })
     );
 
@@ -74,17 +92,18 @@ export async function GET(req: NextRequest): Promise<Response> {
     const withoutSliderData = filterData(rangedData, { ..._rest, observed_at: null });
 
     const filteredData = filterData(withoutSliderData, { ...search, observed_at: null });
-    const sortedData = sortData(filteredData, search.sort);
+    // Apply a server-side default sort (provider asc) when none provided
+    const sortParam = search.sort ?? { id: "provider", desc: false };
+    const sortedData = sortData(filteredData, sortParam);
     const withoutSliderFacets = getFacetsFromData(withoutSliderData);
     const facets = getFacetsFromData(filteredData);
     const withPercentileData = percentileData(sortedData);
     // Deduplicate rows by uuid to avoid duplicate React keys
-    const uniqueByUuidMap = new Map<string, ColumnSchema>();
-    for (const row of withPercentileData as any) {
-      // @ts-ignore
-      if (!uniqueByUuidMap.has(row.uuid)) uniqueByUuidMap.set(row.uuid, row as any);
+    const uniqueByUuidMap = new Map<RowId, RowWithId>();
+    for (const row of withPercentileData as RowWithId[]) {
+      if (!uniqueByUuidMap.has(row.uuid)) uniqueByUuidMap.set(row.uuid, row);
     }
-    const uniqueData = Array.from(uniqueByUuidMap.values());
+    const uniqueData: RowWithId[] = Array.from(uniqueByUuidMap.values());
 
     // Cursor windowing by numeric offset (simple, server-driven)
     const pageSize = search.size ?? 50;

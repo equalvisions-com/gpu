@@ -15,6 +15,7 @@ import { DataTableInfinite } from "./data-table-infinite";
 import { dataOptions } from "./query-options";
 import type { FacetMetadataSchema } from "./schema";
 import { searchParamsParser } from "./search-params";
+import type { RowWithId } from "@/types/api";
 
 export function Client() {
   const [search] = useQueryStates(searchParamsParser);
@@ -30,8 +31,8 @@ export function Client() {
   } = useInfiniteQuery(dataOptions(search));
   useResetFocus();
 
-  const flatData = React.useMemo(() => {
-    return data?.pages?.flatMap((page) => page.data ?? []) ?? [];
+  const flatData: RowWithId[] = React.useMemo(() => {
+    return (data?.pages?.flatMap((page) => page.data ?? []) as RowWithId[]) ?? [] as RowWithId[];
   }, [data?.pages]);
 
   const liveMode = useLiveMode(flatData);

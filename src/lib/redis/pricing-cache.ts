@@ -1,4 +1,5 @@
 import { redis } from './client';
+import { getJson, mgetJson } from './json';
 import type { PriceRow, ProviderSnapshot, CachedPricingData, ProviderResult } from '@/types/pricing';
 
 const PRICING_KEY_PREFIX = 'pricing';
@@ -82,19 +83,14 @@ export class PricingCache {
    * Get latest pricing snapshot for a provider
    */
   async getPricingSnapshot(provider: string): Promise<ProviderSnapshot | null> {
-    const data = await redis.get(`${PRICING_KEY_PREFIX}:${provider}:latest`);
-    if (!data) return null;
-
-    // Upstash Redis automatically deserializes JSON, so data should already be an object
-    return data as ProviderSnapshot;
+    return await getJson<ProviderSnapshot>(`${PRICING_KEY_PREFIX}:${provider}:latest`);
   }
 
   /**
    * Get pricing data for a specific instance
    */
   async getInstancePricing(provider: string, instanceId: string): Promise<PriceRow | null> {
-    const data = await redis.get(`${PRICING_KEY_PREFIX}:${provider}:by_instance:${instanceId}` as any);
-    return (data as unknown as PriceRow) ?? null;
+    return await getJson<PriceRow>(`${PRICING_KEY_PREFIX}:${provider}:by_instance:${instanceId}`);
   }
 
   /**
@@ -112,8 +108,8 @@ export class PricingCache {
     const providers = await this.getAvailableProviders();
     if (!providers.length) return [];
     const keys = providers.map((p) => `${PRICING_KEY_PREFIX}:${p}:latest`);
-    const values = await (redis as any).mget(...keys);
-    return ((values || []) as ProviderSnapshot[]).filter(Boolean);
+    const values = await mgetJson<ProviderSnapshot>(keys);
+    return (values || []).filter(Boolean) as ProviderSnapshot[];
   }
 
   /**
