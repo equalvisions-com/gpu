@@ -22,6 +22,7 @@ export function Client() {
     data,
     isFetching,
     isLoading,
+    isFetchingNextPage,
     fetchNextPage,
     hasNextPage,
     fetchPreviousPage,
@@ -85,6 +86,7 @@ export function Client() {
       <DataTableInfinite
       columns={columns}
       data={flatData}
+        skeletonRowCount={search.size ?? 50}
       totalRows={totalDBRowCount}
       filterRows={filterDBRowCount}
       totalRowsFetched={totalFetched}
@@ -111,6 +113,7 @@ export function Client() {
       sheetFields={sheetFields}
       isFetching={isFetching}
       isLoading={isLoading}
+      isFetchingNextPage={isFetchingNextPage}
       fetchNextPage={fetchNextPage}
       hasNextPage={hasNextPage}
       fetchPreviousPage={fetchPreviousPage}

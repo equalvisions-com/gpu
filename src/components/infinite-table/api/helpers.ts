@@ -110,7 +110,7 @@ export function splitData(data: ColumnSchema[], search: SearchParamsType) {
   // For pricing data, we don't need complex cursor-based pagination
   // Just return a slice of the data based on start and size
   const start = search.start || 0;
-  const size = search.size || 1000; // Increase default page size for proper cross-provider sorting
+  const size = search.size || 50;
 
   return data.slice(start, start + size);
 }

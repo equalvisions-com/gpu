@@ -61,6 +61,8 @@ import { LiveButton } from "./_components/live-button";
 import { RefreshButton } from "./_components/refresh-button";
 import { SocialsFooter } from "./_components/socials-footer";
 import { searchParamsParser } from "./search-params";
+import { RowSkeletons } from "./_components/row-skeletons";
+import { useVirtualizer } from "@tanstack/react-virtual";
 
 // Floating Controls Button Component
 function FloatingControlsButton() {
@@ -92,6 +94,10 @@ export interface DataTableInfiniteProps<TData, TValue, TMeta> {
   // REMINDER: make sure to pass the correct id to access the rows
   getRowId?: TableOptions<TData>["getRowId"];
   data: TData[];
+  // Number of skeleton rows to render while loading
+  skeletonRowCount?: number;
+  // Number of skeleton rows to render while loading the next page
+  skeletonNextPageRowCount?: number;
   defaultColumnFilters?: ColumnFiltersState;
   defaultColumnSorting?: SortingState;
   defaultRowSelection?: RowSelectionState;
@@ -113,6 +119,7 @@ export interface DataTableInfiniteProps<TData, TValue, TMeta> {
   meta: TMeta;
   isFetching?: boolean;
   isLoading?: boolean;
+  isFetchingNextPage?: boolean;
   hasNextPage?: boolean;
   fetchNextPage: (
     options?: FetchNextPageOptions | undefined,
@@ -131,6 +138,8 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   getRowClassName,
   getRowId,
   data,
+  skeletonRowCount = 50,
+  skeletonNextPageRowCount,
   defaultColumnFilters = [],
   defaultColumnSorting = [],
   defaultRowSelection = {},
@@ -139,6 +148,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   sheetFields = [],
   isFetching,
   isLoading,
+  isFetchingNextPage,
   fetchNextPage,
   hasNextPage,
   fetchPreviousPage,
@@ -182,6 +192,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   const topBarRef = React.useRef<HTMLDivElement>(null);
   const tableRef = React.useRef<HTMLTableElement>(null);
   const [topBarHeight, setTopBarHeight] = React.useState(0);
+  const containerRef = React.useRef<HTMLDivElement>(null);
   // FIXME: searchParamsParser needs to be passed as property
   const [_, setSearch] = useQueryStates(searchParamsParser);
 
@@ -197,6 +208,23 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     },
     [fetchNextPage, isFetching, hasNextPage],
   );
+
+  // IntersectionObserver sentinel for near-bottom prefetch
+  const sentinelRef = React.useCallback((node: HTMLTableRowElement | null) => {
+    if (!node) return;
+    const root = containerRef.current ?? undefined;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry.isIntersecting && hasNextPage && !isFetching) {
+          fetchNextPage();
+        }
+      },
+      { root, rootMargin: "600px 0px 0px 0px" }
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [containerRef, fetchNextPage, hasNextPage, isFetching]);
 
   React.useEffect(() => {
     const observer = new ResizeObserver(() => {
@@ -236,7 +264,9 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     onColumnOrderChange: setColumnOrder,
     onColumnSizingChange: setColumnSizing,
     onColumnSizingInfoChange: setColumnSizingInfo,
-    // Disable client-side sorting - all sorting happens on server side
+    // Disable client-side sorting/pagination - both happen on server
+    manualSorting: true,
+    manualPagination: true,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getFacetedRowModel: getFacetedRowModel(),
@@ -245,6 +275,15 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     filterFns: { arrSome },
     debugAll: process.env.NEXT_PUBLIC_TABLE_DEBUG === "true",
     meta: { getRowClassName },
+  });
+
+  // Virtualizer
+  const rows = table.getRowModel().rows;
+  const rowVirtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => containerRef.current,
+    estimateSize: () => 34,
+    overscan: 8,
   });
 
   React.useEffect(() => {
@@ -373,6 +412,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
             <Table
               ref={tableRef}
               onScroll={onScroll}
+              containerRef={containerRef}
               // REMINDER: https://stackoverflow.com/questions/50361698/border-style-do-not-work-with-sticky-position-element
               className="border-separate border-spacing-0"
               containerClassName="h-full max-h-[calc(100vh_-_var(--top-bar-height))] scrollbar-hide"
@@ -438,19 +478,59 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                 style={{
                   scrollMarginTop: "calc(var(--top-bar-height) + 40px)",
                 }}
+            aria-busy={Boolean(isLoading || (isFetching && !data.length))}
+            aria-live="polite"
               >
-                {table.getRowModel().rows?.length ? (
-                  table.getRowModel().rows.map((row) => (
-                    // REMINDER: if we want to add arrow navigation https://github.com/TanStack/table/discussions/2752#discussioncomment-192558
-                    <React.Fragment key={row.id}>
-                      {renderLiveRow?.({ row })}
-                      <MemoizedRow
-                        row={row}
+                {isLoading || (isFetching && !data.length) ? (
+                  <RowSkeletons table={table} rows={skeletonRowCount} />
+                ) : table.getRowModel().rows?.length ? (
+                  <React.Fragment>
+                    {(() => {
+                      const virtualRows = rowVirtualizer.getVirtualItems();
+                      const totalSize = rowVirtualizer.getTotalSize();
+                      const paddingTop = virtualRows.length > 0 ? virtualRows[0].start : 0;
+                      const paddingBottom = virtualRows.length > 0 ? totalSize - virtualRows[virtualRows.length - 1].end : 0;
+                      return (
+                        <React.Fragment>
+                          {paddingTop > 0 && (
+                            <TableRow aria-hidden>
+                              <TableCell colSpan={columns.length} style={{ height: paddingTop }} />
+                            </TableRow>
+                          )}
+                          {virtualRows.map((vRow) => {
+                            const row = rows[vRow.index];
+                            return (
+                              <React.Fragment key={row.id}>
+                                {renderLiveRow?.({ row })}
+                                <MemoizedRow
+                                  row={row}
+                                  table={table}
+                                  selected={row.getIsSelected()}
+                                />
+                              </React.Fragment>
+                            );
+                          })}
+                          {paddingBottom > 0 && (
+                            <TableRow aria-hidden>
+                              <TableCell colSpan={columns.length} style={{ height: paddingBottom }} />
+                            </TableRow>
+                          )}
+                        </React.Fragment>
+                      );
+                    })()}
+                    {/* Sentinel row for prefetch */}
+                    <TableRow ref={sentinelRef} aria-hidden />
+                    {(isFetchingNextPage && hasNextPage) && (
+                      <RowSkeletons
                         table={table}
-                        selected={row.getIsSelected()}
+                        rows={
+                          typeof skeletonNextPageRowCount === "number"
+                            ? skeletonNextPageRowCount
+                            : skeletonRowCount
+                        }
                       />
-                    </React.Fragment>
-                  ))
+                    )}
+                  </React.Fragment>
                 ) : (
                   <React.Fragment>
                     {renderLiveRow?.()}

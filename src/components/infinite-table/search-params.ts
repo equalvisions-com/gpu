@@ -48,7 +48,7 @@ export const searchParamsParser = {
   start: parseAsInteger.withDefault(0),
   // REQUIRED FOR INFINITE SCROLLING (Live Mode and Load More)
   direction: parseAsStringLiteral(["prev", "next"]).withDefault("next"),
-  cursor: parseAsTimestamp.withDefault(new Date()),
+  cursor: parseAsInteger, // numeric offset cursor (server-driven)
   live: parseAsBoolean.withDefault(false),
   // REQUIRED FOR SELECTION
   uuid: parseAsString,

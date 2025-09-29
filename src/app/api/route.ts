@@ -4,14 +4,7 @@ import type { ColumnSchema } from "@/components/infinite-table/schema";
 import { searchParamsCache } from "@/components/infinite-table/search-params";
 import { pricingCache } from "@/lib/redis";
 import { createHash } from "crypto";
-import {
-  filterData,
-  getFacetsFromData,
-  percentileData,
-  sliderFilterValues,
-  sortData,
-  splitData,
-} from "@/components/infinite-table/api/helpers";
+import { filterData, getFacetsFromData, percentileData, sliderFilterValues, sortData } from "@/components/infinite-table/api/helpers";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +16,9 @@ export async function GET(req: NextRequest): Promise<Response> {
 
     const search = searchParamsCache.parse(Object.fromEntries(_search));
 
-    // Fetch pricing data directly from Redis cache
+    // Simpler path (≤1k rows): read snapshots, flatten, filter/sort/slice in memory
+
+    // Legacy path (in-memory)
     const pricingSnapshots = await pricingCache.getAllPricingSnapshots();
 
     // Flatten all pricing data from all providers
@@ -47,7 +42,7 @@ export async function GET(req: NextRequest): Promise<Response> {
           observedAt ?? "",
         ].join("|");
 
-        const uuid = createHash("sha256").update(stableKey).digest("hex").slice(0, 16);
+        const uuid = createHash("sha256").update(stableKey).digest("hex");
 
         return {
           uuid,
@@ -62,10 +57,11 @@ export async function GET(req: NextRequest): Promise<Response> {
     totalData = totalData.filter((row) => row.class === 'GPU');
 
     // Apply date filtering if specified
+    const _obs = (Array.isArray(search.observed_at) ? (search.observed_at as unknown as Date[]) : undefined);
     const _date =
-      search.observed_at?.length === 1
-        ? [search.observed_at[0], new Date(search.observed_at[0].getTime() + 24 * 60 * 60 * 1000)]
-        : search.observed_at;
+      _obs?.length === 1
+        ? [_obs[0], new Date(_obs[0].getTime() + 24 * 60 * 60 * 1000)]
+        : _obs;
 
     // REMINDER: we need to filter out the slider values because they are not part of the search params
     const _rest = Object.fromEntries(
@@ -82,31 +78,44 @@ export async function GET(req: NextRequest): Promise<Response> {
     const withoutSliderFacets = getFacetsFromData(withoutSliderData);
     const facets = getFacetsFromData(filteredData);
     const withPercentileData = percentileData(sortedData);
-    const data = splitData(withPercentileData, search);
+    // Deduplicate rows by uuid to avoid duplicate React keys
+    const uniqueByUuidMap = new Map<string, ColumnSchema>();
+    for (const row of withPercentileData as any) {
+      // @ts-ignore
+      if (!uniqueByUuidMap.has(row.uuid)) uniqueByUuidMap.set(row.uuid, row as any);
+    }
+    const uniqueData = Array.from(uniqueByUuidMap.values());
 
-    // For pricing data, we don't use cursors
-    const nextCursor = null;
-    const prevCursor = null;
+    // Cursor windowing by numeric offset (simple, server-driven)
+    const pageSize = search.size ?? 50;
+    const startOffset = typeof search.cursor === 'number' && search.cursor >= 0 ? search.cursor : 0;
+    const data = uniqueData.slice(startOffset, startOffset + pageSize);
+    const nextCursor = startOffset + data.length < uniqueData.length ? startOffset + data.length : null;
+    const prevCursor = startOffset > 0 ? Math.max(0, startOffset - pageSize) : null;
 
-    return Response.json({
-      data,
+    const t1 = Date.now();
+    const rowsOut = data;
+    const res = Response.json({
+      data: rowsOut,
       meta: {
-        totalRowCount: totalData.length,
-        filterRowCount: filteredData.length,
+        totalRowCount: uniqueData.length,
+        filterRowCount: uniqueData.length,
         // REMINDER: we separate the slider for keeping the min/max facets of the slider fields
         facets: {
           ...withoutSliderFacets,
-          ...Object.fromEntries(
-            Object.entries(facets).filter(
-              ([key]) => !sliderFilterValues.includes(key as any),
-            ),
-          ),
+          ...Object.fromEntries(Object.entries(facets).filter(([key]) => !sliderFilterValues.includes(key as any))),
         },
         metadata: {} satisfies LogsMeta,
       },
       prevCursor,
       nextCursor,
-    } satisfies InfiniteQueryResponse<ColumnSchema[], LogsMeta>);
+    } satisfies InfiniteQueryResponse<ColumnSchema[], LogsMeta>, {
+      headers: {
+        'Cache-Control': 'no-store, max-age=0',
+      },
+    });
+    console.log(JSON.stringify({ event: 'api.page', rowsReturned: rowsOut.length, latencyMs: Date.now() - t1 }));
+    return res;
   } catch (error) {
     console.error('Error in pricing API:', error);
     return Response.json(

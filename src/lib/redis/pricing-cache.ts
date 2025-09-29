@@ -2,6 +2,7 @@ import { redis } from './client';
 import type { PriceRow, ProviderSnapshot, CachedPricingData, ProviderResult } from '@/types/pricing';
 
 const PRICING_KEY_PREFIX = 'pricing';
+const PROVIDERS_SET_KEY = `${PRICING_KEY_PREFIX}:providers`;
 
 export class PricingCache {
   /**
@@ -51,6 +52,9 @@ export class PricingCache {
     // Store in Redis with atomic operations
     const pipeline = redis.pipeline();
 
+    // Ensure provider is registered
+    pipeline.sadd(PROVIDERS_SET_KEY, provider);
+
     // Store latest snapshot
     pipeline.set(`${PRICING_KEY_PREFIX}:${provider}:latest`, snapshot);
 
@@ -61,14 +65,18 @@ export class PricingCache {
     pipeline.set(`${PRICING_KEY_PREFIX}:${provider}:hash`, sourceHash);
 
     // Store individual instances
-    Object.entries(byInstance).forEach(([instanceId, row]) => {
-      pipeline.set(`${PRICING_KEY_PREFIX}:${provider}:by_instance:${instanceId}`, row);
+    rows.forEach((row) => {
+      const instanceId = (row as any).instance_id || (row as any).item;
+      if (instanceId) {
+        pipeline.set(`${PRICING_KEY_PREFIX}:${provider}:by_instance:${instanceId}`, row);
+      }
     });
 
     await pipeline.exec();
 
     return true;
   }
+  // Index helpers removed for simplicity at current scale
 
   /**
    * Get latest pricing snapshot for a provider
@@ -85,22 +93,16 @@ export class PricingCache {
    * Get pricing data for a specific instance
    */
   async getInstancePricing(provider: string, instanceId: string): Promise<PriceRow | null> {
-    const data = await redis.get<string>(`${PRICING_KEY_PREFIX}:${provider}:by_instance:${instanceId}`);
-    if (!data) return null;
-
-    try {
-      return JSON.parse(data);
-    } catch {
-      return null;
-    }
+    const data = await redis.get(`${PRICING_KEY_PREFIX}:${provider}:by_instance:${instanceId}` as any);
+    return (data as unknown as PriceRow) ?? null;
   }
 
   /**
    * Get all available providers
    */
   async getAvailableProviders(): Promise<string[]> {
-    const keys = await redis.keys(`${PRICING_KEY_PREFIX}:*:latest`);
-    return keys.map(key => key.split(':')[1]).filter(Boolean);
+    const members = await redis.smembers(PROVIDERS_SET_KEY as any);
+    return (members as unknown as string[]) ?? [];
   }
 
   /**
@@ -108,16 +110,18 @@ export class PricingCache {
    */
   async getAllPricingSnapshots(): Promise<ProviderSnapshot[]> {
     const providers = await this.getAvailableProviders();
-    const snapshots: ProviderSnapshot[] = [];
+    if (!providers.length) return [];
+    const keys = providers.map((p) => `${PRICING_KEY_PREFIX}:${p}:latest`);
+    const values = await (redis as any).mget(...keys);
+    return ((values || []) as ProviderSnapshot[]).filter(Boolean);
+  }
 
-    for (const provider of providers) {
-      const snapshot = await this.getPricingSnapshot(provider);
-      if (snapshot) {
-        snapshots.push(snapshot);
-      }
-    }
-
-    return snapshots;
+  /**
+   * No-op retention for ≤1k rows. Present to satisfy maintenance endpoint.
+   * Returns 0 as nothing is trimmed in the simplified setup.
+   */
+  async trimOldRows(_observedBeforeTs: number): Promise<number> {
+    return 0;
   }
 
   /**
@@ -143,6 +147,7 @@ export class PricingCache {
     if (keys.length > 0) {
       await redis.del(...keys);
     }
+    await redis.srem(PROVIDERS_SET_KEY, provider);
   }
 
   /**

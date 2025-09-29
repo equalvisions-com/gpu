@@ -33,8 +33,9 @@ export const dataOptions = (search: SearchParamsType) => {
     queryFn: async ({ pageParam }) => {
       const serialize = searchParamsSerializer({
         ...search,
-        start: pageParam.start,
-        size: pageParam.size,
+        cursor: pageParam?.cursor ?? null,
+        start: pageParam?.cursor ? undefined as unknown as number : 0,
+        size: pageParam?.size,
         uuid: null,
         live: null,
       });
@@ -42,16 +43,10 @@ export const dataOptions = (search: SearchParamsType) => {
       const json = await response.json();
       return json as InfiniteQueryResponse<ColumnSchema[], LogsMeta>;
     },
-    initialPageParam: { start: 0, size: search.size ?? 50 },
-    getNextPageParam: (lastPage, pages) => {
-      const PAGE_SIZE = search.size ?? 50;
-      const totalFetched = pages.reduce((sum, p) => sum + p.data.length, 0);
-      // Stop when we've fetched all rows reported by the server
-      if (totalFetched >= lastPage.meta.filterRowCount) return null;
-      // Also stop if the last page was not full
-      if (lastPage.data.length < PAGE_SIZE) return null;
-      return { start: totalFetched, size: PAGE_SIZE };
-    },
+    initialPageParam: { cursor: null as number | null, size: search.size ?? 50 },
+    getNextPageParam: (lastPage) => lastPage.nextCursor
+      ? { cursor: lastPage.nextCursor, size: search.size ?? 50 }
+      : null,
     refetchOnWindowFocus: false,
     placeholderData: keepPreviousData,
   });

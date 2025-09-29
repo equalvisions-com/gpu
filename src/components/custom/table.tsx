@@ -4,11 +4,13 @@ import { cn } from "@/lib/utils";
 
 interface TableProps extends React.HTMLAttributes<HTMLTableElement> {
   containerClassName?: string;
+  containerRef?: React.Ref<HTMLDivElement>;
 }
 
 const Table = React.forwardRef<HTMLTableElement, TableProps>(
-  ({ className, containerClassName, onScroll, ...props }, ref) => (
+  ({ className, containerClassName, containerRef, onScroll, ...props }, ref) => (
     <div
+      ref={containerRef}
       className={cn("w-full overflow-auto", containerClassName)}
       style={{
         // Prevent overscroll bounce on horizontal axis to make scrolling feel more restrictive

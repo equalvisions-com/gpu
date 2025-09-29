@@ -92,3 +92,16 @@ export async function GET() {
     }, { status: 500 });
   }
 }
+// Periodic maintenance endpoint (e.g., cron ping)
+export async function PUT(request: NextRequest) {
+  try {
+    const url = new URL(request.url);
+    const days = Number(url.searchParams.get('days') ?? '30');
+    const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+    const removed = await pricingCache.trimOldRows(cutoff);
+    // TODO: Optionally scan "pricing:row:*" and delete docs no longer referenced by any index
+    return NextResponse.json({ ok: true, removed });
+  } catch (e) {
+    return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 500 });
+  }
+}
