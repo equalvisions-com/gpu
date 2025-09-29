@@ -1,5 +1,5 @@
 import type { Percentile } from "@/lib/request/percentile";
-import { infiniteQueryOptions, keepPreviousData } from "@tanstack/react-query";
+import { infiniteQueryOptions } from "@tanstack/react-query";
 import type {
   ColumnSchema,
   FacetMetadataSchema,
@@ -48,6 +48,5 @@ export const dataOptions = (search: SearchParamsType) => {
       ? { cursor: lastPage.nextCursor, size: search.size ?? 50 }
       : null,
     refetchOnWindowFocus: false,
-    placeholderData: keepPreviousData,
   });
 };

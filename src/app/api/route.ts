@@ -27,40 +27,9 @@ export async function GET(req: NextRequest): Promise<Response> {
     let totalData: RowWithId[] = pricingSnapshots.flatMap((snapshot) =>
       snapshot.rows.map((row) => {
         const observedAt = snapshot.last_updated;
-        const sku = "sku" in row ? row.sku : undefined;
-        const item = "item" in row ? row.item : undefined;
-        const region = "region" in row ? (row as any).region : undefined;
-        const zone = "zone" in row ? (row as any).zone : undefined;
-        const gpu_model = "gpu_model" in row ? (row as any).gpu_model : undefined;
-        const gpu_count = "gpu_count" in row ? (row as any).gpu_count : undefined;
-        const vram_gb = "vram_gb" in row ? (row as any).vram_gb : undefined;
-        const vcpus = "vcpus" in row ? (row as any).vcpus : undefined;
-        const system_ram_gb = "system_ram_gb" in row ? (row as any).system_ram_gb : undefined;
-        const ram_gb = "ram_gb" in row ? (row as any).ram_gb : undefined;
-        const price_hour_usd = "price_hour_usd" in row ? (row as any).price_hour_usd : undefined;
-        const price_usd = "price_usd" in row ? (row as any).price_usd : undefined;
-        const price_unit = (row as any).price_unit;
-        const klass = row.class;
-        const network = "network" in row ? (row as any).network : undefined;
-
-        const stableKey = [
-          snapshot.provider,
-          sku ?? item ?? "",
-          region ?? "",
-          zone ?? "",
-          gpu_model ?? "",
-          gpu_count ?? "",
-          vram_gb ?? "",
-          vcpus ?? "",
-          system_ram_gb ?? ram_gb ?? "",
-          price_hour_usd ?? price_usd ?? "",
-          price_unit ?? "",
-          klass ?? "",
-          network ?? "",
-          observedAt ?? "",
-        ].join("|");
-
-        const uuid = createHash("sha256").update(stableKey).digest("hex");
+        // Hash the full canonical payload to guarantee per-row uniqueness across providers
+        const hashInput = JSON.stringify({ provider: snapshot.provider, observed_at: observedAt, row });
+        const uuid = createHash("sha256").update(hashInput).digest("hex");
 
         return {
           uuid,

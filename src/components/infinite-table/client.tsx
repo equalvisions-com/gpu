@@ -32,7 +32,17 @@ export function Client() {
   useResetFocus();
 
   const flatData: RowWithId[] = React.useMemo(() => {
-    return (data?.pages?.flatMap((page) => page.data ?? []) as RowWithId[]) ?? [] as RowWithId[];
+    const merged = (data?.pages?.flatMap((page) => page.data ?? []) as RowWithId[]) ?? [] as RowWithId[];
+    // Guard against any accidental duplicates across pages/renders
+    const seen = new Set<string>();
+    const unique: RowWithId[] = [];
+    for (const row of merged) {
+      if (!seen.has(row.uuid)) {
+        seen.add(row.uuid);
+        unique.push(row);
+      }
+    }
+    return unique;
   }, [data?.pages]);
 
   const liveMode = useLiveMode(flatData);
