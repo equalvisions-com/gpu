@@ -282,8 +282,12 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   const rowVirtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => containerRef.current,
-    estimateSize: () => 34,
-    overscan: 8,
+    // A slightly larger estimate improves initial layout; dynamic measurement refines it
+    estimateSize: () => 40,
+    // Stabilize identity across reorders to reduce flicker
+    getItemKey: (index) => rows[index]?.id ?? index,
+    // Increase overscan to smooth fast scrolling
+    overscan: 24,
   });
 
   React.useEffect(() => {
@@ -503,9 +507,11 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                               <React.Fragment key={row.id}>
                                 {renderLiveRow?.({ row })}
                                 <MemoizedRow
+                                  dataIndex={vRow.index}
                                   row={row}
                                   table={table}
                                   selected={row.getIsSelected()}
+                                  rowRef={rowVirtualizer.measureElement}
                                 />
                               </React.Fragment>
                             );
@@ -584,17 +590,25 @@ function Row<TData>({
   row,
   table,
   selected,
+  rowRef,
+  dataIndex,
 }: {
   row: Row<TData>;
   table: TTable<TData>;
   // REMINDER: row.getIsSelected(); - just for memoization
   selected?: boolean;
+  // Used by the virtualizer to dynamically measure row height
+  rowRef?: (el: HTMLTableRowElement | null) => void;
+  // Virtual index for measurement mapping
+  dataIndex?: number;
 }) {
   // REMINDER: rerender the row when live mode is toggled - used to opacity the row
   // via the `getRowClassName` prop - but for some reasons it wil render the row on data fetch
   useQueryState("live", searchParamsParser.live);
   return (
     <TableRow
+      ref={rowRef}
+      data-index={dataIndex}
       id={row.id}
       tabIndex={0}
       data-state={selected && "selected"}
