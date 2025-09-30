@@ -5,13 +5,14 @@ import { cn } from "@/lib/utils";
 interface TableProps extends React.HTMLAttributes<HTMLTableElement> {
   containerClassName?: string;
   containerRef?: React.Ref<HTMLDivElement>;
+  containerOverflowVisible?: boolean;
 }
 
 const Table = React.forwardRef<HTMLTableElement, TableProps>(
-  ({ className, containerClassName, containerRef, onScroll, ...props }, ref) => (
+  ({ className, containerClassName, containerRef, containerOverflowVisible, onScroll, ...props }, ref) => (
     <div
       ref={containerRef}
-      className={cn("w-full overflow-auto", containerClassName)}
+      className={cn("w-full", containerOverflowVisible ? "overflow-visible" : "overflow-auto", containerClassName)}
       style={{
         // Prevent overscroll bounce on horizontal axis to make scrolling feel more restrictive
         overscrollBehaviorX: 'contain'

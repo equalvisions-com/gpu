@@ -61,7 +61,8 @@ import { RefreshButton } from "./_components/refresh-button";
 import { SocialsFooter } from "./_components/socials-footer";
 import { searchParamsParser } from "./search-params";
 import { RowSkeletons } from "./_components/row-skeletons";
-import { useVirtualizer } from "@tanstack/react-virtual";
+import { useVirtualizer, useWindowVirtualizer } from "@tanstack/react-virtual";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
 // Floating Controls Button Component
 function FloatingControlsButton() {
@@ -278,17 +279,22 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   });
 
   // Virtualizer
+  const isMobile = useMediaQuery("(max-width: 640px)");
   const rows = table.getRowModel().rows;
-  const rowVirtualizer = useVirtualizer({
-    count: rows.length,
-    getScrollElement: () => containerRef.current,
-    // A slightly larger estimate improves initial layout; dynamic measurement refines it
-    estimateSize: () => 40,
-    // Stabilize identity across reorders to reduce flicker
-    getItemKey: (index) => rows[index]?.id ?? index,
-    // Increase overscan to smooth fast scrolling
-    overscan: 24,
-  });
+  const rowVirtualizer = isMobile
+    ? useWindowVirtualizer({
+        count: rows.length,
+        estimateSize: () => 40,
+        getItemKey: (index) => rows[index]?.id ?? index,
+        overscan: 24,
+      })
+    : useVirtualizer({
+        count: rows.length,
+        getScrollElement: () => containerRef.current,
+        estimateSize: () => 40,
+        getItemKey: (index) => rows[index]?.id ?? index,
+        overscan: 24,
+      });
 
   React.useEffect(() => {
     const columnFiltersWithNullable = filterFields.map((field) => {
@@ -417,9 +423,12 @@ export function DataTableInfinite<TData, TValue, TMeta>({
               ref={tableRef}
               onScroll={onScroll}
               containerRef={containerRef}
+              containerOverflowVisible={isMobile}
               // REMINDER: https://stackoverflow.com/questions/50361698/border-style-do-not-work-with-sticky-position-element
               className="border-separate border-spacing-0"
-              containerClassName="h-full max-h-[calc(100vh_-_var(--top-bar-height))] scrollbar-hide"
+              containerClassName={cn(
+                isMobile ? "" : "h-full max-h-[calc(100vh_-_var(--top-bar-height))] scrollbar-hide"
+              )}
             >
               <TableHeader className={cn("sticky top-0 z-20 bg-background")}>
                 {table.getHeaderGroups().map((headerGroup) => (
