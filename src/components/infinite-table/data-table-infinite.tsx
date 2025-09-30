@@ -281,20 +281,20 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   // Virtualizer
   const isMobile = useMediaQuery("(max-width: 640px)");
   const rows = table.getRowModel().rows;
-  const rowVirtualizer = isMobile
-    ? useWindowVirtualizer({
-        count: rows.length,
-        estimateSize: () => 40,
-        getItemKey: (index) => rows[index]?.id ?? index,
-        overscan: 24,
-      })
-    : useVirtualizer({
-        count: rows.length,
-        getScrollElement: () => containerRef.current,
-        estimateSize: () => 40,
-        getItemKey: (index) => rows[index]?.id ?? index,
-        overscan: 24,
-      });
+  const windowVirtualizer = useWindowVirtualizer({
+    count: rows.length,
+    estimateSize: () => 40,
+    getItemKey: (index) => rows[index]?.id ?? index,
+    overscan: 24,
+  });
+  const containerVirtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => containerRef.current,
+    estimateSize: () => 40,
+    getItemKey: (index) => rows[index]?.id ?? index,
+    overscan: 24,
+  });
+  const rowVirtualizer = isMobile ? windowVirtualizer : containerVirtualizer;
 
   React.useEffect(() => {
     const columnFiltersWithNullable = filterFields.map((field) => {
