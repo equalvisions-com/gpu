@@ -25,7 +25,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     // Set cache headers for Edge caching
     const response = NextResponse.json(instanceData, {
       headers: {
-        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120',
+        'Cache-Control': 'no-store, max-age=0',
       },
     });
 

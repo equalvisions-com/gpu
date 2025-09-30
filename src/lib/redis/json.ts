@@ -7,8 +7,9 @@ export async function getJson<T>(key: string): Promise<T | null> {
 
 export async function mgetJson<T>(keys: string[]): Promise<(T | null)[]> {
   if (keys.length === 0) return [];
-  const vals = await (redis as any).mget(...keys);
-  return (vals as (T | null)[]) ?? [];
+  // Upstash client mget is typed variadic; spread keys safely
+  const vals = await (redis as unknown as { mget: (...keys: string[]) => Promise<(T | null)[]> }).mget(...keys);
+  return vals ?? [];
 }
 
 

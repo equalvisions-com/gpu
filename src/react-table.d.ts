@@ -4,6 +4,11 @@ declare module "@tanstack/react-table" {
   // https://github.com/TanStack/table/issues/44#issuecomment-1377024296
   interface TableMeta<TData extends unknown> {
     getRowClassName?: (row: Row<TData>) => string;
+    metadata?: {
+      totalRows?: number;
+      filterRows?: number;
+      totalRowsFetched?: number;
+    };
   }
 
   interface ColumnMeta {

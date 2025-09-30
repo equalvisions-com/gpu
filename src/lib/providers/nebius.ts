@@ -27,7 +27,7 @@ function cleanGpuModelName(item: string): string {
 export class NebiusScraper implements ProviderScraper {
   name = 'nebius';
   url = PRICING_URL;
-  scrapeIntervalMinutes = 10;
+  scrapeIntervalMinutes = 1440;
   enabled = true;
 
   async scrape(): Promise<ProviderResult> {

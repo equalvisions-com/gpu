@@ -40,7 +40,7 @@ const ORACLE_GPU_PRICING: Record<string, number> = {
 export class OracleScraper implements ProviderScraper {
   name = 'oracle';
   url = PRICING_URL;
-  scrapeIntervalMinutes = 10;
+  scrapeIntervalMinutes = 1440;
   enabled = true;
 
   async scrape(): Promise<ProviderResult> {
@@ -198,7 +198,7 @@ export class OracleScraper implements ProviderScraper {
         type: shape.startsWith('BM') ? 'Bare Metal' : shape.startsWith('VM') ? 'Virtual Machine' : undefined,
       });
 
-      console.log(`Added Oracle ${shape}: ${gpuModel} (${gpuCount}x), $${priceHourUsd}/hr`);
+      // Intentionally no logger here to reduce noise in production logs
     });
 
     return rows;

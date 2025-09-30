@@ -8,7 +8,7 @@ const PRICING_URL = 'https://www.digitalocean.com/pricing/gpu-droplets';
 export class DigitalOceanScraper implements ProviderScraper {
   name = 'digitalocean';
   url = PRICING_URL;
-  scrapeIntervalMinutes = 10;
+  scrapeIntervalMinutes = 1440;
   enabled = true;
 
   async scrape(): Promise<ProviderResult> {
@@ -166,7 +166,7 @@ export class DigitalOceanScraper implements ProviderScraper {
         type: 'Virtual Machine',
       });
 
-      console.log(`Added DigitalOcean ${gpuName}: $${priceHourUsd.toFixed(2)}/hr (${gpuCount} GPU${gpuCount > 1 ? 's' : ''})`);
+      // Intentionally no logger here to reduce noise; keep provider parsers quiet in production
     });
 
     return rows;

@@ -32,7 +32,7 @@ function slugify(input: string): string {
 export class HyperstackScraper implements ProviderScraper {
   name = 'hyperstack';
   url = PRICING_URL;
-  scrapeIntervalMinutes = 10;
+  scrapeIntervalMinutes = 1440;
   enabled = true;
 
   async scrape(): Promise<ProviderResult> {

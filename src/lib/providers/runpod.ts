@@ -8,7 +8,7 @@ const PRICING_URL = 'https://www.runpod.io/pricing';
 export class RunPodScraper implements ProviderScraper {
   name = 'runpod';
   url = PRICING_URL;
-  scrapeIntervalMinutes = 10;
+  scrapeIntervalMinutes = 1440;
   enabled = true;
 
   async scrape(): Promise<ProviderResult> {

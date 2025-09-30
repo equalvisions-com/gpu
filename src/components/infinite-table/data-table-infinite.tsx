@@ -49,7 +49,6 @@ import {
   getCoreRowModel,
   getFacetedRowModel,
   getFilteredRowModel,
-  getSortedRowModel,
   getFacetedMinMaxValues as getTTableFacetedMinMaxValues,
   getFacetedUniqueValues as getTTableFacetedUniqueValues,
   useReactTable,
@@ -255,6 +254,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     },
     enableMultiRowSelection: false,
     enableColumnResizing: true,
+    enableMultiSort: false,
     columnResizeMode: "onChange",
     getRowId,
     onColumnVisibilityChange: setColumnVisibility,
@@ -264,17 +264,17 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     onColumnOrderChange: setColumnOrder,
     onColumnSizingChange: setColumnSizing,
     onColumnSizingInfoChange: setColumnSizingInfo,
-    // Disable client-side sorting/pagination - both happen on server
+    // Disable client-side sorting/pagination/filtering - all happen on server
     manualSorting: true,
+    manualFiltering: true,
     manualPagination: true,
     getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getFacetedRowModel: getFacetedRowModel(),
-    getFacetedUniqueValues: getTTableFacetedUniqueValues(),
-    getFacetedMinMaxValues: getTTableFacetedMinMaxValues(),
+    // Facets are provided by the server; expose them via provider callbacks
+    // to power filter UIs without re-filtering rows client-side
+    // Note: we intentionally do not call getFilteredRowModel/getFacetedRowModel
     filterFns: { arrSome },
     debugAll: process.env.NEXT_PUBLIC_TABLE_DEBUG === "true",
-    meta: { getRowClassName },
+    meta: { getRowClassName, metadata: { totalRows, filterRows, totalRowsFetched } },
   });
 
   // Virtualizer

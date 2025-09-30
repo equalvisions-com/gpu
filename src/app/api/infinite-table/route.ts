@@ -1,5 +1,4 @@
 import { NextRequest } from "next/server";
-import SuperJSON from "superjson";
 import type { InfiniteQueryResponse, LogsMeta } from "@/components/infinite-table/query-options";
 import type { ColumnSchema } from "@/components/infinite-table/schema";
 import { searchParamsCache } from "@/components/infinite-table/search-params";
@@ -8,8 +7,9 @@ import {
   getFacetsFromData,
   sliderFilterValues,
   sortData,
-  splitData,
 } from "@/components/infinite-table/api/helpers";
+import { pricingCache } from "@/lib/redis";
+import { createHash } from "crypto";
 
 export const dynamic = "force-dynamic";
 
@@ -21,24 +21,24 @@ export async function GET(req: NextRequest): Promise<Response> {
 
     const search = searchParamsCache.parse(Object.fromEntries(_search));
 
-    // Fetch pricing data from our pricing API
-    const pricingResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/pricing`);
-    if (!pricingResponse.ok) {
-      throw new Error(`Failed to fetch pricing data: ${pricingResponse.status}`);
-    }
-
-    const pricingSnapshots = await pricingResponse.json();
+    // Read from Redis cache directly (avoid network hop)
+    const pricingSnapshots = await pricingCache.getAllPricingSnapshots();
 
     // Flatten all pricing data from all providers, only including GPU class rows
     const totalData: ColumnSchema[] = pricingSnapshots.flatMap((snapshot: any) =>
       snapshot.rows
         .filter((row: any) => row.class === 'GPU')
-        .map((row: any) => ({
-          uuid: crypto.randomUUID(),
-          ...row,
-          provider: snapshot.provider,
-          // Keep the original observed_at field from the row, which is already a string
-        }))
+        .map((row: any) => {
+          const observedAt = snapshot.last_updated;
+          const hashInput = JSON.stringify({ provider: snapshot.provider, observed_at: observedAt, row });
+          const uuid = createHash("sha256").update(hashInput).digest("hex");
+          return {
+            uuid,
+            ...row,
+            provider: snapshot.provider,
+            observed_at: observedAt,
+          } as ColumnSchema;
+        })
     );
 
     // Apply date filtering if specified
@@ -61,34 +61,32 @@ export async function GET(req: NextRequest): Promise<Response> {
     const sortedData = sortData(filteredData, search.sort);
     const withoutSliderFacets = getFacetsFromData(withoutSliderData);
     const facets = getFacetsFromData(filteredData);
-    const data = splitData(sortedData, search);
 
-    const nextCursor =
-      data.length > 0 ? new Date(data[data.length - 1].observed_at).getTime() : null;
-    const prevCursor =
-      data.length > 0 ? new Date(data[0].observed_at).getTime() : new Date().getTime();
+    // Offset-based pagination (align with main API)
+    const pageSize = search.size ?? 50;
+    const startOffset = typeof search.cursor === 'number' && search.cursor >= 0 ? search.cursor : 0;
+    const data = sortedData.slice(startOffset, startOffset + pageSize);
+    const nextCursor = startOffset + data.length < sortedData.length ? startOffset + data.length : null;
+    const prevCursor = startOffset > 0 ? Math.max(0, startOffset - pageSize) : null;
 
-    return Response.json(
-      SuperJSON.stringify({
-        data,
-        meta: {
-          totalRowCount: totalData.length,
-          filterRowCount: filteredData.length,
-          // REMINDER: we separate the slider for keeping the min/max facets of the slider fields
-          facets: {
-            ...withoutSliderFacets,
-            ...Object.fromEntries(
-              Object.entries(facets).filter(
-                ([key]) => !sliderFilterValues.includes(key as any),
-              ),
+    return Response.json({
+      data,
+      meta: {
+        totalRowCount: totalData.length,
+        filterRowCount: filteredData.length,
+        facets: {
+          ...withoutSliderFacets,
+          ...Object.fromEntries(
+            Object.entries(facets).filter(
+              ([key]) => !sliderFilterValues.includes(key as any),
             ),
-          },
-          metadata: {} satisfies LogsMeta,
+          ),
         },
-        prevCursor,
-        nextCursor,
-      } satisfies InfiniteQueryResponse<ColumnSchema[], LogsMeta>),
-    );
+        metadata: {} satisfies LogsMeta,
+      },
+      prevCursor,
+      nextCursor,
+    } satisfies InfiniteQueryResponse<ColumnSchema[], LogsMeta>);
   } catch (error) {
     console.error('Error in pricing API:', error);
     return Response.json(

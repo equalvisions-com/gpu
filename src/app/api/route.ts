@@ -7,6 +7,7 @@ import type { SearchParamsType } from "@/components/infinite-table/search-params
 import { pricingCache } from "@/lib/redis";
 import { createHash } from "crypto";
 import { filterData, getFacetsFromData, percentileData, sliderFilterValues, sortData } from "@/components/infinite-table/api/helpers";
+import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -86,8 +87,8 @@ export async function GET(req: NextRequest): Promise<Response> {
     const res = Response.json({
       data: rowsOut,
       meta: {
-        totalRowCount: uniqueData.length,
-        filterRowCount: uniqueData.length,
+        totalRowCount: totalData.length,
+        filterRowCount: filteredData.length,
         // REMINDER: we separate the slider for keeping the min/max facets of the slider fields
         facets: {
           ...withoutSliderFacets,
@@ -102,7 +103,7 @@ export async function GET(req: NextRequest): Promise<Response> {
         'Cache-Control': 'no-store, max-age=0',
       },
     });
-    console.log(JSON.stringify({ event: 'api.page', rowsReturned: rowsOut.length, latencyMs: Date.now() - t1 }));
+    logger.info(JSON.stringify({ event: 'api.page', rowsReturned: rowsOut.length, latencyMs: Date.now() - t1 }));
     return res;
   } catch (error) {
     console.error('Error in pricing API:', error);

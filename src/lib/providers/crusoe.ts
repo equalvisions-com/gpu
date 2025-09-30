@@ -23,7 +23,7 @@ const CRUSOE_GPU_SPECS: Record<string, { vcpus: number; ramGb: number }> = {
 export class CrusoeScraper implements ProviderScraper {
   name = 'crusoe';
   url = PRICING_URL;
-  scrapeIntervalMinutes = 10;
+  scrapeIntervalMinutes = 1440;
   enabled = true;
 
   async scrape(): Promise<ProviderResult> {
@@ -102,7 +102,7 @@ export class CrusoeScraper implements ProviderScraper {
       let priceHourUsd = 0;
       let isContactSales = false;
       if (priceText === 'Contact sales') {
-        console.log(`Including Crusoe ${gpuName}: requires contacting sales`);
+        // Skip noisy logging in production
         isContactSales = true;
         priceHourUsd = -1; // Special marker for contact sales
       } else {
@@ -151,7 +151,7 @@ export class CrusoeScraper implements ProviderScraper {
         type: 'Virtual Machine',
       });
 
-      console.log(`Added Crusoe ${gpuName}: ${gpuModel} (${vramGb}GB ${gpuInterface}) - ${isContactSales ? 'Contact Sales' : `$${priceHourUsd}/hr`}`);
+      // Skip noisy logging in production
     });
 
     return rows;

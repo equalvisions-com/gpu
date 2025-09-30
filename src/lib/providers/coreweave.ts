@@ -27,7 +27,7 @@ function toFloat(s?: string | null): number | undefined {
 export class CoreWeaveScraper implements ProviderScraper {
   name = 'coreweave';
   url = PRICING_URL;
-  scrapeIntervalMinutes = 10;
+  scrapeIntervalMinutes = 1440;
   enabled = true;
 
   async scrape(): Promise<ProviderResult> {

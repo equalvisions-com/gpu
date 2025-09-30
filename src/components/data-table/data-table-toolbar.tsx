@@ -18,13 +18,13 @@ export function DataTableToolbar({ renderActions }: DataTableToolbarProps) {
   const { open: _open } = useControls();
   const filters = table.getState().columnFilters;
 
-  const rows = useMemo(
-    () => ({
-      total: table.getCoreRowModel().rows.length,
-      filtered: table.getFilteredRowModel().rows.length,
-    }),
-    [isLoading, columnFilters],
-  );
+  // Server-mode: render counts based on meta passed into sheet/details.
+  // Fallback to current page counts if meta is unavailable
+  const rows = useMemo(() => {
+    const total = (table.options.meta as any)?.metadata?.totalRows ?? table.getCoreRowModel().rows.length;
+    const filtered = (table.options.meta as any)?.metadata?.filterRows ?? table.getCoreRowModel().rows.length;
+    return { total, filtered };
+  }, [isLoading, columnFilters, table]);
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-4">

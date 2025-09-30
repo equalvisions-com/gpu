@@ -8,7 +8,7 @@ const PRICING_URL = 'https://lambda.ai/pricing';
 export class LambdaScraper implements ProviderScraper {
   name = 'lambda';
   url = PRICING_URL;
-  scrapeIntervalMinutes = 10;
+  scrapeIntervalMinutes = 1440;
   enabled = true;
 
   async scrape(): Promise<ProviderResult> {
