@@ -12,12 +12,6 @@ import {
 } from "@/components/custom/sheet";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { Kbd } from "@/components/custom/kbd";
 import { cn } from "@/lib/utils";
 import { useDataTable } from "@/components/data-table/data-table-provider";
@@ -122,48 +116,30 @@ export function DataTableSheetDetails({
               )}
             </SheetTitle>
             <div className="flex h-7 items-center gap-1">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-7 w-7"
-                      disabled={!prevId}
-                      onClick={onPrev}
-                    >
-                      <ChevronUp className="h-5 w-5" />
-                      <span className="sr-only">Previous</span>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>
-                      Navigate <Kbd variant="outline">↑</Kbd>
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-7 w-7"
-                      disabled={!nextId}
-                      onClick={onNext}
-                    >
-                      <ChevronDown className="h-5 w-5" />
-                      <span className="sr-only">Next</span>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>
-                      Navigate <Kbd variant="outline">↓</Kbd>
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7"
+                disabled={!prevId}
+                onClick={onPrev}
+                aria-label="Previous (↑)"
+                title="Previous (↑)"
+              >
+                <ChevronUp className="h-5 w-5" />
+                <span className="sr-only">Previous</span>
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7"
+                disabled={!nextId}
+                onClick={onNext}
+                aria-label="Next (↓)"
+                title="Next (↓)"
+              >
+                <ChevronDown className="h-5 w-5" />
+                <span className="sr-only">Next</span>
+              </Button>
               <Separator orientation="vertical" className="mx-1" />
               <SheetClose autoFocus={true} asChild>
                 <Button size="icon" variant="ghost" className="h-7 w-7">

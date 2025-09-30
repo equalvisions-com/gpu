@@ -16,6 +16,12 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://data-table.openstatus.dev"),
   title: TITLE,
   description: DESCRIPTION,
+  // Disable iOS Safari data detectors (smart links) to avoid dotted underlines
+  formatDetection: {
+    telephone: false,
+    email: false,
+    address: false,
+  },
   twitter: {
     images: ["/assets/data-table-infinite.png"],
     card: "summary_large_image",
