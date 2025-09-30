@@ -195,6 +195,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   const containerRef = React.useRef<HTMLDivElement>(null);
   // searchParamsParser is provided as a prop
   const [_, setSearch] = useQueryStates(searchParamsParser);
+  const isMobile = useMediaQuery("(max-width: 640px)");
 
   const onScroll = React.useCallback(
     (e: React.UIEvent<HTMLElement>) => {
@@ -212,7 +213,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   // IntersectionObserver sentinel for near-bottom prefetch
   const sentinelRef = React.useCallback((node: HTMLTableRowElement | null) => {
     if (!node) return;
-    const root = containerRef.current ?? undefined;
+    const root = isMobile ? undefined : (containerRef.current ?? undefined);
     const observer = new IntersectionObserver(
       (entries) => {
         const entry = entries[0];
@@ -224,7 +225,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     );
     observer.observe(node);
     return () => observer.disconnect();
-  }, [containerRef, fetchNextPage, hasNextPage, isFetching]);
+  }, [containerRef, fetchNextPage, hasNextPage, isFetching, isMobile]);
 
   React.useEffect(() => {
     const observer = new ResizeObserver(() => {
@@ -279,7 +280,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   });
 
   // Virtualizer
-  const isMobile = useMediaQuery("(max-width: 640px)");
   const rows = table.getRowModel().rows;
   const windowVirtualizer = useWindowVirtualizer({
     count: rows.length,
@@ -421,7 +421,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
           <div className="z-0">
             <Table
               ref={tableRef}
-              onScroll={onScroll}
+              onScroll={isMobile ? undefined : onScroll}
               containerRef={containerRef}
               containerOverflowVisible={isMobile}
               // REMINDER: https://stackoverflow.com/questions/50361698/border-style-do-not-work-with-sticky-position-element
