@@ -24,7 +24,6 @@ import { useHotKey } from "@/hooks/use-hot-key";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { useControls } from "@/providers/controls";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
-import { formatCompactNumber } from "@/lib/format";
 import { arrSome } from "@/lib/table/filterfns";
 import { cn } from "@/lib/utils";
 import {
@@ -53,7 +52,6 @@ import {
   getFacetedUniqueValues as getTTableFacetedUniqueValues,
   useReactTable,
 } from "@tanstack/react-table";
-import { LoaderCircle } from "lucide-react";
 import { useQueryState, useQueryStates, type ParserBuilder } from "nuqs";
 import * as React from "react";
 import { LiveButton } from "./_components/live-button";
@@ -174,7 +172,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
       "data-table-visibility",
       defaultColumnVisibility,
     );
-  const [columnSizing, setColumnSizing] = React.useState<ColumnSizingState>({});
   const [columnSizingInfo, setColumnSizingInfoState] = React.useState<ColumnSizingInfoState | null>(null);
 
   const setColumnSizingInfo = React.useCallback((updaterOrValue: ColumnSizingInfoState | ((old: ColumnSizingInfoState) => ColumnSizingInfoState)) => {
@@ -259,7 +256,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
       sorting,
       columnVisibility,
       rowSelection,
-      columnSizing,
       ...(columnSizingInfo && { columnSizingInfo }),
     },
     enableMultiRowSelection: false,
@@ -271,7 +267,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     onColumnFiltersChange: setColumnFilters,
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
-    onColumnSizingChange: setColumnSizing,
     onColumnSizingInfoChange: setColumnSizingInfo,
     // Disable client-side sorting/pagination/filtering - all happen on server
     manualSorting: true,
@@ -286,31 +281,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     meta: { getRowClassName, metadata: { totalRows, filterRows, totalRowsFetched } },
   });
 
-  // Dynamically size the `gpu_model` column to fill remaining space based on container width
-  React.useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-
-    const updateModelColumnSize = () => {
-      const containerWidth = el.clientWidth;
-      const visibleCols = table.getVisibleLeafColumns();
-      const fixedWidth = visibleCols.reduce(
-        (sum, c) => (c.id === "gpu_model" ? sum : sum + c.getSize()),
-        0,
-      );
-      const modelWidth = Math.max(0, containerWidth - fixedWidth);
-      setColumnSizing((prev) => {
-        const prevVal = prev?.gpu_model;
-        if (prevVal !== undefined && Math.round(prevVal) === Math.round(modelWidth)) return prev;
-        return { ...prev, gpu_model: modelWidth };
-      });
-    };
-
-    const ro = new ResizeObserver(updateModelColumnSize);
-    ro.observe(el);
-    updateModelColumnSize();
-    return () => ro.disconnect();
-  }, [table, setColumnSizing, containerRef, columnVisibility]);
 
   // Virtualizer
   const rows = table.getRowModel().rows;
@@ -456,8 +426,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
               containerRef={containerRef}
               containerOverflowVisible={isMobile}
               // REMINDER: https://stackoverflow.com/questions/50361698/border-style-do-not-work-with-sticky-position-element
-              className="border-separate border-spacing-0 table-fixed w-auto min-w-full"
-              style={{ tableLayout: 'fixed' }}
+              className="border-separate border-spacing-0 w-auto min-w-full"
               containerClassName={cn(
                 isMobile ? "" : "h-full max-h-[calc(100vh_-_var(--top-bar-height))] scrollbar-hide"
               )}
@@ -480,9 +449,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                             header.column.columnDef.meta?.headerClassName,
                           )}
                           style={{
-                            width: `${header.getSize()}px`,
-                            maxWidth: `${header.getSize()}px`,
-                            minWidth: header.column.id === "gpu_model" ? "0px" : `${header.getSize()}px`,
+                            width: header.id === "gpu_model" ? "auto" : `${header.getSize()}px`,
                           }}
                           aria-sort={
                             header.column.getIsSorted() === "asc"
@@ -674,9 +641,7 @@ function Row<TData>({
             cell.column.columnDef.meta?.cellClassName,
           )}
           style={{
-            width: `${cell.column.getSize()}px`,
-            maxWidth: `${cell.column.getSize()}px`,
-            minWidth: cell.column.id === "gpu_model" ? "0px" : `${cell.column.getSize()}px`,
+            width: cell.column.id === "gpu_model" ? "auto" : `${cell.column.getSize()}px`,
           }}
         >
           {flexRender(cell.column.columnDef.cell, cell.getContext())}

@@ -94,11 +94,11 @@ export const columns: ColumnDef<ColumnSchema>[] = [
         </div>
       );
     },
-    size: 160,
-    minSize: 160,
+    size: 155,
+    minSize: 155,
     meta: {
-      cellClassName: "font-medium",
-      headerClassName: "text-center",
+      cellClassName: "font-medium min-w-[155px]",
+      headerClassName: "text-center min-w-[155px]",
     },
   },
   {
@@ -114,13 +114,14 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       if (!displayName) return <span className="text-muted-foreground">N/A</span>;
 
       return (
-        <div className="min-w-0 w-full"><span className="block truncate font-medium">{displayName}</span></div>
+        <div className="w-full overflow-hidden" style={{ maxWidth: '250px' }}><span className="block truncate font-medium">{displayName}</span></div>
       );
     },
-    size: 600,
+    size: 1, // Use flex sizing instead of fixed pixels
+    minSize: 250,
     meta: {
-      cellClassName: "",
-      headerClassName: "text-center",
+      cellClassName: "overflow-hidden w-[250px] max-w-[250px] min-w-[250px] md:flex-1 md:max-w-none",
+      headerClassName: "text-center overflow-hidden w-[250px] max-w-[250px] min-w-[250px] md:flex-1 md:max-w-none",
     },
   },
   {
@@ -134,12 +135,12 @@ export const columns: ColumnDef<ColumnSchema>[] = [
         <Checkbox />
       </div>
     ),
-    size: 40,
-    minSize: 40,
-    maxSize: 40,
+    size: 45,
+    minSize: 45,
+    maxSize: 45,
     meta: {
-      cellClassName: "text-center p-0",
-      headerClassName: "",
+      cellClassName: "text-center p-0 min-w-[45px]",
+      headerClassName: "min-w-[45px]",
     },
   },
   {
@@ -162,11 +163,11 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       );
     },
     filterFn: "inNumberRange",
-    size: 160,
-    minSize: 160,
+    size: 155,
+    minSize: 155,
     meta: {
-      headerClassName: "text-center",
-      cellClassName: "text-center",
+      headerClassName: "text-center min-w-[155px]",
+      cellClassName: "text-center min-w-[155px]",
     },
   },
   {
@@ -186,11 +187,11 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       );
     },
     filterFn: "inNumberRange",
-    size: 160,
-    minSize: 160,
+    size: 155,
+    minSize: 155,
     meta: {
-      cellClassName: "text-center",
-      headerClassName: "text-center",
+      cellClassName: "text-center min-w-[155px]",
+      headerClassName: "text-center min-w-[155px]",
     },
   },
   {
@@ -208,11 +209,11 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       ) : <span className="text-muted-foreground">N/A</span>;
     },
     filterFn: "inNumberRange",
-    size: 160,
-    minSize: 160,
+    size: 155,
+    minSize: 155,
     meta: {
-      cellClassName: "text-center",
-      headerClassName: "text-center",
+      cellClassName: "text-center min-w-[155px]",
+      headerClassName: "text-center min-w-[155px]",
     },
   },
   {
@@ -232,11 +233,11 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       );
     },
     filterFn: "inNumberRange",
-    size: 160,
-    minSize: 160,
+    size: 155,
+    minSize: 155,
     meta: {
-      cellClassName: "text-center",
-      headerClassName: "text-center",
+      cellClassName: "text-center min-w-[155px]",
+      headerClassName: "text-center min-w-[155px]",
     },
   },
   {
@@ -255,11 +256,11 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       ) : <span className="text-muted-foreground">N/A</span>;
     },
     filterFn: "inNumberRange",
-    size: 160,
-    minSize: 160,
+    size: 155,
+    minSize: 155,
     meta: {
-      cellClassName: "text-center",
-      headerClassName: "text-center",
+      cellClassName: "text-center min-w-[155px]",
+      headerClassName: "text-center min-w-[155px]",
     },
   },
   {
@@ -271,11 +272,11 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       const type = row.getValue<ColumnSchema["type"]>("type");
       return type ? <span className="font-medium">{type}</span> : <span className="text-muted-foreground">N/A</span>;
     },
-    size: 160,
-    minSize: 160,
+    size: 155,
+    minSize: 155,
     meta: {
-      cellClassName: "text-center",
-      headerClassName: "text-center",
+      cellClassName: "text-center min-w-[155px]",
+      headerClassName: "text-center min-w-[155px]",
     },
   },
 ];

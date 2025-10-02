@@ -20,7 +20,6 @@ export function RowSkeletons<TData>({ table, rows = 10 }: RowSkeletonsProps<TDat
         <TableRow key={`skeleton-${rowIndex}`} className={cn("[&>:not(:last-child)]:border-r", "hover:bg-transparent")}
         >
           {visibleColumns.map((column) => {
-            const widthPx = `${column.getSize()}px`;
             const id = column.id;
 
             return (
@@ -28,9 +27,7 @@ export function RowSkeletons<TData>({ table, rows = 10 }: RowSkeletonsProps<TDat
                 key={`${id}-${rowIndex}`}
                 className={cn("truncate border-b border-border p-[12px]", column.columnDef.meta?.cellClassName)}
                 style={{
-                  width: widthPx,
-                  maxWidth: widthPx,
-                  minWidth: id === "gpu_model" ? "0px" : widthPx,
+                  width: id === "gpu_model" ? "auto" : `${column.getSize()}px`,
                 }}
               >
                 {id === "blank" ? (
