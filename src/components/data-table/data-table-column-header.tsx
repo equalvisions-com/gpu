@@ -8,16 +8,20 @@ import { cn } from "@/lib/utils";
 interface DataTableColumnHeaderProps<TData, TValue> extends ButtonProps {
   column: Column<TData, TValue>;
   title: string;
+  centerTitle?: boolean;
+  titleClassName?: string;
 }
 
 export function DataTableColumnHeader<TData, TValue>({
   column,
   title,
   className,
+  centerTitle,
+  titleClassName,
   ...props
 }: DataTableColumnHeaderProps<TData, TValue>) {
   if (!column.getCanSort()) {
-    return <div className={cn(className)}>{title}</div>;
+    return <div className={cn(className, centerTitle && "text-center", titleClassName)}>{title}</div>;
   }
 
   return (
@@ -28,13 +32,14 @@ export function DataTableColumnHeader<TData, TValue>({
         column.toggleSorting(undefined);
       }}
       className={cn(
-        "py-0 px-0 h-7 hover:bg-transparent flex gap-2 items-center justify-between w-full",
+        "py-0 px-0 h-7 hover:bg-transparent flex gap-2 items-center w-full",
+        centerTitle ? "relative justify-center" : "justify-between",
         className
       )}
       {...props}
     >
-      <span>{title}</span>
-      <span className="flex flex-col">
+      <span className={cn(centerTitle && "pointer-events-none", titleClassName)}>{title}</span>
+      <span className={cn("flex flex-col", centerTitle && "absolute right-0 top-1/2 -translate-y-1/2") }>
         <ChevronUp
           className={cn(
             "-mb-0.5 h-3 w-3",

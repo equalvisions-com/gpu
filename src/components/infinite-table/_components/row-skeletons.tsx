@@ -26,16 +26,24 @@ export function RowSkeletons<TData>({ table, rows = 10 }: RowSkeletonsProps<TDat
             return (
               <TableCell
                 key={`${id}-${rowIndex}`}
-                className={cn("truncate border-b border-border p-[10px]", column.columnDef.meta?.cellClassName)}
-                style={{ width: widthPx, maxWidth: widthPx, minWidth: widthPx }}
+                className={cn("truncate border-b border-border p-[12px]", column.columnDef.meta?.cellClassName)}
+                style={{
+                  width: widthPx,
+                  maxWidth: widthPx,
+                  minWidth: id === "gpu_model" ? "0px" : widthPx,
+                }}
               >
-                {id === "provider" ? (
+                {id === "blank" ? (
+                  <div className="flex justify-center">
+                    <Skeleton className="h-4 w-4 rounded-sm" />
+                  </div>
+                ) : id === "provider" ? (
                   <div className="flex items-center gap-2">
-                    <Skeleton className="h-5 w-5 rounded" />
+                    <Skeleton className="h-5 w-5 rounded-full" />
                     <Skeleton className="h-4 w-[6rem]" />
                   </div>
                 ) : id === "gpu_model" ? (
-                  <Skeleton className="h-4 w-[12rem]" />
+                  <Skeleton className="h-4 w-full" />
                 ) : id === "price_hour_usd" ? (
                   <div className="flex items-center justify-center">
                     <Skeleton className="h-4 w-10" />

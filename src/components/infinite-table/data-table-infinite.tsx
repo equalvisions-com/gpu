@@ -169,10 +169,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     React.useState<SortingState>(defaultColumnSorting);
   const [rowSelection, setRowSelection] =
     React.useState<RowSelectionState>(defaultRowSelection);
-  const [columnOrder, setColumnOrder] = useLocalStorage<string[]>(
-    "data-table-column-order",
-    [],
-  );
   const [columnVisibility, setColumnVisibility] =
     useLocalStorage<VisibilityState>(
       "data-table-visibility",
@@ -245,17 +241,29 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   const table = useReactTable({
     data,
     columns,
+    initialState: {
+      columnOrder: [
+        "blank",
+        "provider",
+        "gpu_model",
+        "price_hour_usd",
+        "gpu_count",
+        "vram_gb",
+        "vcpus",
+        "system_ram_gb",
+        "type",
+      ],
+    },
     state: {
       columnFilters,
       sorting,
       columnVisibility,
       rowSelection,
-      columnOrder,
       columnSizing,
       ...(columnSizingInfo && { columnSizingInfo }),
     },
     enableMultiRowSelection: false,
-    enableColumnResizing: true,
+    enableColumnResizing: false,
     enableMultiSort: false,
     columnResizeMode: "onChange",
     getRowId,
@@ -263,7 +271,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     onColumnFiltersChange: setColumnFilters,
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
-    onColumnOrderChange: setColumnOrder,
     onColumnSizingChange: setColumnSizing,
     onColumnSizingInfoChange: setColumnSizingInfo,
     // Disable client-side sorting/pagination/filtering - all happen on server
@@ -278,6 +285,32 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     debugAll: process.env.NEXT_PUBLIC_TABLE_DEBUG === "true",
     meta: { getRowClassName, metadata: { totalRows, filterRows, totalRowsFetched } },
   });
+
+  // Dynamically size the `gpu_model` column to fill remaining space based on container width
+  React.useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const updateModelColumnSize = () => {
+      const containerWidth = el.clientWidth;
+      const visibleCols = table.getVisibleLeafColumns();
+      const fixedWidth = visibleCols.reduce(
+        (sum, c) => (c.id === "gpu_model" ? sum : sum + c.getSize()),
+        0,
+      );
+      const modelWidth = Math.max(0, containerWidth - fixedWidth);
+      setColumnSizing((prev) => {
+        const prevVal = prev?.gpu_model;
+        if (prevVal !== undefined && Math.round(prevVal) === Math.round(modelWidth)) return prev;
+        return { ...prev, gpu_model: modelWidth };
+      });
+    };
+
+    const ro = new ResizeObserver(updateModelColumnSize);
+    ro.observe(el);
+    updateModelColumnSize();
+    return () => ro.disconnect();
+  }, [table, setColumnSizing, containerRef, columnVisibility]);
 
   // Virtualizer
   const rows = table.getRowModel().rows;
@@ -344,7 +377,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
 
 
   useHotKey(() => {
-    setColumnOrder([]);
     setColumnVisibility(defaultColumnVisibility);
   }, "u");
 
@@ -356,9 +388,8 @@ export function DataTableInfinite<TData, TValue, TMeta>({
       columnFilters={columnFilters}
       sorting={sorting}
       rowSelection={rowSelection}
-      columnOrder={columnOrder}
       columnVisibility={columnVisibility}
-      enableColumnOrdering={true}
+      enableColumnOrdering={false}
       isLoading={isFetching || isLoading}
       getFacetedUniqueValues={getFacetedUniqueValues}
       getFacetedMinMaxValues={getFacetedMinMaxValues}
@@ -425,7 +456,8 @@ export function DataTableInfinite<TData, TValue, TMeta>({
               containerRef={containerRef}
               containerOverflowVisible={isMobile}
               // REMINDER: https://stackoverflow.com/questions/50361698/border-style-do-not-work-with-sticky-position-element
-              className="border-separate border-spacing-0"
+              className="border-separate border-spacing-0 table-fixed w-auto min-w-full"
+              style={{ tableLayout: 'fixed' }}
               containerClassName={cn(
                 isMobile ? "" : "h-full max-h-[calc(100vh_-_var(--top-bar-height))] scrollbar-hide"
               )}
@@ -450,7 +482,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                           style={{
                             width: `${header.getSize()}px`,
                             maxWidth: `${header.getSize()}px`,
-                            minWidth: `${header.getSize()}px`,
+                            minWidth: header.column.id === "gpu_model" ? "0px" : `${header.getSize()}px`,
                           }}
                           aria-sort={
                             header.column.getIsSorted() === "asc"
@@ -638,13 +670,13 @@ function Row<TData>({
         <TableCell
           key={cell.id}
           className={cn(
-            "truncate border-b border-border p-[10px]",
+            "truncate border-b border-border p-[12px]",
             cell.column.columnDef.meta?.cellClassName,
           )}
           style={{
             width: `${cell.column.getSize()}px`,
             maxWidth: `${cell.column.getSize()}px`,
-            minWidth: `${cell.column.getSize()}px`,
+            minWidth: cell.column.id === "gpu_model" ? "0px" : `${cell.column.getSize()}px`,
           }}
         >
           {flexRender(cell.column.columnDef.cell, cell.getContext())}

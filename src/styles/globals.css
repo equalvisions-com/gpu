@@ -86,15 +86,13 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;  /* Chrome, Safari and Opera */
   }
-  /* Hide window scrollbars on small screens for native-app feel */
-  @media (max-width: 640px) {
-    html, body {
-      -ms-overflow-style: none;  /* IE and Edge */
-      scrollbar-width: none;     /* Firefox */
-    }
-    html::-webkit-scrollbar,
-    body::-webkit-scrollbar {
-      display: none;             /* Chrome, Safari and Opera */
-    }
+  /* Hide window scrollbars on all screens */
+  html, body {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;     /* Firefox */
+  }
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
+    display: none;             /* Chrome, Safari and Opera */
   }
 }
