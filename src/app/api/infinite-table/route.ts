@@ -11,7 +11,7 @@ import {
 import { pricingCache } from "@/lib/redis";
 import { createHash } from "crypto";
 import { unstable_cache } from "next/cache";
-export const revalidate = 900;
+export const dynamic = 'force-dynamic';
 
  
 

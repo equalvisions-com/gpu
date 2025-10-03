@@ -9,7 +9,7 @@ import { createHash } from "crypto";
 import { filterData, getFacetsFromData, percentileData, sliderFilterValues, sortData } from "@/components/infinite-table/api/helpers";
 import { unstable_cache } from "next/cache";
 import { logger } from "@/lib/logger";
-export const revalidate = 900;
+export const dynamic = 'force-dynamic';
 
  
 

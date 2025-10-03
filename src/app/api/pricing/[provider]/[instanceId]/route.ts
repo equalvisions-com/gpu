@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { pricingCache } from '@/lib/redis';
-export const revalidate = 900;
-
+export const dynamic = 'force-dynamic';
  
 
 // GET /api/pricing/[provider]/[instanceId] - Returns pricing data for a specific instance
