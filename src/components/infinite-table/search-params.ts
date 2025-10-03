@@ -46,10 +46,9 @@ export const searchParamsParser = {
   sort: parseAsSort,
   size: parseAsInteger.withDefault(50),
   start: parseAsInteger.withDefault(0),
-  // REQUIRED FOR INFINITE SCROLLING (Live Mode and Load More)
+  // REQUIRED FOR INFINITE SCROLLING (Load More)
   direction: parseAsStringLiteral(["prev", "next"]).withDefault("next"),
   cursor: parseAsInteger, // numeric offset cursor (server-driven)
-  live: parseAsBoolean.withDefault(false),
   // REQUIRED FOR SELECTION
   uuid: parseAsString,
 };

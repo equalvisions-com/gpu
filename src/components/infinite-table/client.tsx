@@ -2,13 +2,10 @@
 
 import { ControlsProvider } from "@/providers/controls";
 import { useHotKey } from "@/hooks/use-hot-key";
-import { getLevelRowClassName } from "@/lib/request/level";
-import { cn } from "@/lib/utils";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import type { Table as TTable } from "@tanstack/react-table";
-import { useQueryState, useQueryStates } from "nuqs";
+import { useQueryStates } from "nuqs";
 import * as React from "react";
-import { LiveRow } from "./_components/live-row";
 import { columns } from "./columns";
 import { filterFields as defaultFilterFields, sheetFields } from "./constants";
 import { DataTableInfinite } from "./data-table-infinite";
@@ -26,8 +23,6 @@ export function Client() {
     isFetchingNextPage,
     fetchNextPage,
     hasNextPage,
-    fetchPreviousPage,
-    refetch,
   } = useInfiniteQuery(dataOptions(search));
   useResetFocus();
 
@@ -35,8 +30,6 @@ export function Client() {
     // Server guarantees stable, non-overlapping windows via deterministic sort + cursor
     return (data?.pages?.flatMap((page) => page.data ?? []) as RowWithId[]) ?? [] as RowWithId[];
   }, [data?.pages]);
-
-  const liveMode = useLiveMode(flatData);
 
   // REMINDER: meta data is always the same for all pages as filters do not change(!)
   const lastPage = data?.pages?.[data?.pages.length - 1];
@@ -46,7 +39,7 @@ export function Client() {
   const facets = lastPage?.meta?.facets;
   const totalFetched = flatData?.length;
 
-  const { sort, start, size, uuid, cursor, direction, live, observed_at, ...filter } =
+  const { sort, start, size, uuid, cursor, direction, observed_at, ...filter } =
     search;
 
   // REMINDER: this is currently needed for the cmdk search
@@ -100,16 +93,6 @@ export function Client() {
         .filter(({ value }) => value ?? undefined)}
       defaultColumnSorting={sort ? [sort] : undefined}
       defaultRowSelection={search.uuid ? { [search.uuid]: true } : undefined}
-      // FIXME: make it configurable - TODO: use `columnHidden: boolean` in `filterFields`
-      defaultColumnVisibility={{
-        uuid: false,
-        "timing.dns": false,
-        "timing.connection": false,
-        "timing.tls": false,
-        "timing.ttfb": false,
-        "timing.transfer": false,
-        observed_at: false,
-      }}
       meta={metadata}
       filterFields={filterFields}
       sheetFields={sheetFields}
@@ -118,21 +101,10 @@ export function Client() {
       isFetchingNextPage={isFetchingNextPage}
       fetchNextPage={fetchNextPage}
       hasNextPage={hasNextPage}
-      fetchPreviousPage={fetchPreviousPage}
-      refetch={refetch}
-      getRowClassName={(row) => {
-        const rowTimestamp = new Date(row.original.observed_at).getTime();
-        const isPast = rowTimestamp <= (liveMode.timestamp || -1);
-        return cn(isPast ? "opacity-50" : "opacity-100");
-      }}
+      getRowClassName={() => "opacity-100"}
       getRowId={(row) => row.uuid}
       getFacetedUniqueValues={getFacetedUniqueValues(facets)}
       getFacetedMinMaxValues={getFacetedMinMaxValues(facets)}
-      renderLiveRow={(props) => {
-        if (!liveMode.timestamp) return null;
-        if (props?.row.original.uuid !== liveMode?.row?.uuid) return null;
-        return <LiveRow />;
-      }}
       renderSheetTitle={(props) => props.row?.original.uuid}
       searchParamsParser={searchParamsParser}
     />
@@ -151,36 +123,6 @@ function useResetFocus() {
   }, ".");
 }
 
-// TODO: make a BaseObject (incl. observed_at and uuid e.g. for every upcoming branch of infinite table)
-export function useLiveMode<TData extends { observed_at: string }>(data: TData[]) {
-  const [live] = useQueryState("live", searchParamsParser.live);
-  // REMINDER: used to capture the live mode on timestamp
-  const liveTimestamp = React.useRef<number | undefined>(
-    live ? new Date().getTime() : undefined,
-  );
-
-  React.useEffect(() => {
-    if (live) liveTimestamp.current = new Date().getTime();
-    else liveTimestamp.current = undefined;
-  }, [live]);
-
-  const anchorRow = React.useMemo(() => {
-    if (!live) return undefined;
-
-    const item = data.find((item) => {
-      // return first item that is there if not liveTimestamp
-      if (!liveTimestamp.current) return true;
-      // return first item that is after the liveTimestamp
-      if (new Date(item.observed_at).getTime() > liveTimestamp.current) return false;
-      return true;
-      // return first item if no liveTimestamp
-    });
-
-    return item;
-  }, [live, data]);
-
-  return { row: anchorRow, timestamp: liveTimestamp.current };
-}
 
 export function getFacetedUniqueValues<TData>(
   facets?: Record<string, FacetMetadataSchema>,

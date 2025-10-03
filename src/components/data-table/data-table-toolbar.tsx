@@ -6,7 +6,6 @@ import { useControls } from "@/providers/controls";
 import { useMemo } from "react";
 import { DataTableFilterControlsDrawer } from "./data-table-filter-controls-drawer";
 import { DataTableResetButton } from "./data-table-reset-button";
-import { DataTableViewOptions } from "./data-table-view-options";
 
 interface DataTableToolbarProps {
   renderActions?: () => React.ReactNode;
@@ -33,7 +32,10 @@ export function DataTableToolbar({ renderActions }: DataTableToolbarProps) {
           <DataTableFilterControlsDrawer />
         </div>
         <div>
-          <p className="hidden text-sm text-muted-foreground sm:block">
+          <svg className="h-4 w-4 m-2" viewBox="0 0 284 284" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M142 0L284 284H0L142 0Z" fill="white" />
+          </svg>
+          <p className="hidden text-sm text-muted-foreground">
             <span className="font-mono font-medium">
               {formatCompactNumber(rows.filtered)}
             </span>{" "}
@@ -43,7 +45,7 @@ export function DataTableToolbar({ renderActions }: DataTableToolbarProps) {
             </span>{" "}
             row(s) <span className="sr-only sm:not-sr-only">filtered</span>
           </p>
-          <p className="block text-sm text-muted-foreground sm:hidden">
+          <p className="hidden text-sm text-muted-foreground">
             <span className="font-mono font-medium">
               {formatCompactNumber(rows.filtered)}
             </span>{" "}
@@ -54,7 +56,6 @@ export function DataTableToolbar({ renderActions }: DataTableToolbarProps) {
       <div className="ml-auto flex items-center gap-2">
         {filters.length ? <DataTableResetButton /> : null}
         {renderActions?.()}
-        <DataTableViewOptions />
       </div>
     </div>
   );

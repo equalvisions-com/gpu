@@ -77,10 +77,6 @@ const hotkeys = [
     key: "U",
     description: "Undo column state (order, visibility)",
   },
-  {
-    key: "J",
-    description: "Toggle live mode",
-  },
   { key: "Esc", description: "Reset table filters" },
   {
     key: ".",

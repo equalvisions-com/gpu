@@ -15,7 +15,6 @@ export const filterFields: DataTableFilterField<ColumnSchema>[] = [
     label: "Provider",
     value: "provider",
     type: "input",
-    defaultOpen: true,
   },
   {
     label: "GPU Model",

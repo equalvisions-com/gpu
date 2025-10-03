@@ -6,7 +6,6 @@ import type {
   RowSelectionState,
   SortingState,
   Table,
-  VisibilityState,
 } from "@tanstack/react-table";
 import { createContext, useContext, useMemo } from "react";
 import { ControlsProvider } from "../../providers/controls";
@@ -19,7 +18,6 @@ interface DataTableStateContextType {
   sorting: SortingState;
   rowSelection: RowSelectionState;
   columnOrder: string[];
-  columnVisibility: VisibilityState;
   pagination: PaginationState;
   enableColumnOrdering: boolean;
 }
@@ -62,7 +60,6 @@ export function DataTableProvider<TData, TValue>({
       sorting: props.sorting ?? [],
       rowSelection: props.rowSelection ?? {},
       columnOrder: props.columnOrder ?? [],
-      columnVisibility: props.columnVisibility ?? {},
       pagination: props.pagination ?? { pageIndex: 0, pageSize: 10 },
       enableColumnOrdering: props.enableColumnOrdering ?? false,
     }),
@@ -71,7 +68,6 @@ export function DataTableProvider<TData, TValue>({
       props.sorting,
       props.rowSelection,
       props.columnOrder,
-      props.columnVisibility,
       props.pagination,
       props.table,
       props.filterFields,

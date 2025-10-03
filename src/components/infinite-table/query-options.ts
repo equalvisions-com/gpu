@@ -28,8 +28,8 @@ export const dataOptions = (search: SearchParamsType) => {
   return infiniteQueryOptions({
     queryKey: [
       "data-table",
-      searchParamsSerializer({ ...search, uuid: null, live: null }),
-    ], // remove uuid/live as it would otherwise retrigger a fetch
+      searchParamsSerializer({ ...search, uuid: null }),
+    ],
     queryFn: async ({ pageParam }) => {
       const serialize = searchParamsSerializer({
         ...search,
@@ -37,7 +37,6 @@ export const dataOptions = (search: SearchParamsType) => {
         start: pageParam?.cursor ? undefined as unknown as number : 0,
         size: pageParam?.size,
         uuid: null,
-        live: null,
       });
       const response = await fetch(`/api${serialize}`);
       const json = await response.json();

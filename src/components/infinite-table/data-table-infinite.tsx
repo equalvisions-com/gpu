@@ -21,16 +21,11 @@ import type {
 } from "@/components/data-table/types";
 import { Button } from "@/components/ui/button";
 import { useHotKey } from "@/hooks/use-hot-key";
-import { useLocalStorage } from "@/hooks/use-local-storage";
 import { useControls } from "@/providers/controls";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { arrSome } from "@/lib/table/filterfns";
 import { cn } from "@/lib/utils";
-import {
-  FetchPreviousPageOptions,
-  RefetchOptions,
-  type FetchNextPageOptions,
-} from "@tanstack/react-query";
+import { type FetchNextPageOptions } from "@tanstack/react-query";
 import type {
   ColumnDef,
   ColumnFiltersState,
@@ -41,7 +36,6 @@ import type {
   SortingState,
   TableOptions,
   Table as TTable,
-  VisibilityState,
 } from "@tanstack/react-table";
 import {
   flexRender,
@@ -52,10 +46,8 @@ import {
   getFacetedUniqueValues as getTTableFacetedUniqueValues,
   useReactTable,
 } from "@tanstack/react-table";
-import { useQueryState, useQueryStates, type ParserBuilder } from "nuqs";
+import { useQueryStates, type ParserBuilder } from "nuqs";
 import * as React from "react";
-import { LiveButton } from "./_components/live-button";
-import { RefreshButton } from "./_components/refresh-button";
 import { SocialsFooter } from "./_components/socials-footer";
 import { searchParamsParser } from "./search-params";
 import { RowSkeletons } from "./_components/row-skeletons";
@@ -99,7 +91,6 @@ export interface DataTableInfiniteProps<TData, TValue, TMeta> {
   defaultColumnFilters?: ColumnFiltersState;
   defaultColumnSorting?: SortingState;
   defaultRowSelection?: RowSelectionState;
-  defaultColumnVisibility?: VisibilityState;
   filterFields?: DataTableFilterField<TData>[];
   sheetFields?: SheetField<TData, TMeta>[];
   // REMINDER: close to the same signature as the `getFacetedUniqueValues` of the `useReactTable`
@@ -122,11 +113,6 @@ export interface DataTableInfiniteProps<TData, TValue, TMeta> {
   fetchNextPage: (
     options?: FetchNextPageOptions | undefined,
   ) => Promise<unknown>;
-  fetchPreviousPage?: (
-    options?: FetchPreviousPageOptions | undefined,
-  ) => Promise<unknown>;
-  refetch: (options?: RefetchOptions | undefined) => void;
-  renderLiveRow?: (props?: { row: Row<TData> }) => React.ReactNode;
   renderSheetTitle: (props: { row?: Row<TData> }) => React.ReactNode;
   searchParamsParser: Record<string, ParserBuilder<any>>;
 }
@@ -141,7 +127,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   defaultColumnFilters = [],
   defaultColumnSorting = [],
   defaultRowSelection = {},
-  defaultColumnVisibility = {},
   filterFields = [],
   sheetFields = [],
   isFetching,
@@ -149,15 +134,12 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   isFetchingNextPage,
   fetchNextPage,
   hasNextPage,
-  fetchPreviousPage,
-  refetch,
   totalRows = 0,
   filterRows = 0,
   totalRowsFetched = 0,
   getFacetedUniqueValues,
   getFacetedMinMaxValues,
   meta,
-  renderLiveRow,
   renderSheetTitle,
   searchParamsParser,
 }: DataTableInfiniteProps<TData, TValue, TMeta>) {
@@ -167,11 +149,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     React.useState<SortingState>(defaultColumnSorting);
   const [rowSelection, setRowSelection] =
     React.useState<RowSelectionState>(defaultRowSelection);
-  const [columnVisibility, setColumnVisibility] =
-    useLocalStorage<VisibilityState>(
-      "data-table-visibility",
-      defaultColumnVisibility,
-    );
   const [columnSizingInfo, setColumnSizingInfoState] = React.useState<ColumnSizingInfoState | null>(null);
 
   const setColumnSizingInfo = React.useCallback((updaterOrValue: ColumnSizingInfoState | ((old: ColumnSizingInfoState) => ColumnSizingInfoState)) => {
@@ -254,7 +231,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     state: {
       columnFilters,
       sorting,
-      columnVisibility,
       rowSelection,
       ...(columnSizingInfo && { columnSizingInfo }),
     },
@@ -263,11 +239,11 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     enableMultiSort: false,
     columnResizeMode: "onChange",
     getRowId,
-    onColumnVisibilityChange: setColumnVisibility,
     onColumnFiltersChange: setColumnFilters,
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
     onColumnSizingInfoChange: setColumnSizingInfo,
+    enableHiding: false,
     // Disable client-side sorting/pagination/filtering - all happen on server
     manualSorting: true,
     manualFiltering: true,
@@ -346,9 +322,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   }, [rowSelection, selectedRow, isLoading, isFetching]);
 
 
-  useHotKey(() => {
-    setColumnVisibility(defaultColumnVisibility);
-  }, "u");
 
   return (
     <DataTableProvider
@@ -358,7 +331,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
       columnFilters={columnFilters}
       sorting={sorting}
       rowSelection={rowSelection}
-      columnVisibility={columnVisibility}
       enableColumnOrdering={false}
       isLoading={isFetching || isLoading}
       getFacetedUniqueValues={getFacetedUniqueValues}
@@ -382,17 +354,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
           )}
         >
           <div className="border-b border-border bg-background p-2 md:sticky md:top-0">
-            <DataTableToolbar
-              renderActions={() => [
-                <RefreshButton key="refresh" onClick={refetch} />,
-                fetchPreviousPage ? (
-                  <LiveButton
-                    key="live"
-                    fetchPreviousPage={fetchPreviousPage}
-                  />
-                ) : null,
-              ]}
-            />
+            <DataTableToolbar />
           </div>
           <div className="p-2">
             <DataTableFilterCommand searchParamsParser={searchParamsParser} />
@@ -513,7 +475,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                             const row = rows[vRow.index];
                             return (
                               <React.Fragment key={row.id}>
-                                {renderLiveRow?.({ row })}
                                 <MemoizedRow
                                   dataIndex={vRow.index}
                                   row={row}
@@ -547,7 +508,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                   </React.Fragment>
                 ) : (
                   <React.Fragment>
-                    {renderLiveRow?.()}
                     <TableRow>
                       <TableCell
                         colSpan={columns.length}
@@ -610,9 +570,6 @@ function Row<TData>({
   // Virtual index for measurement mapping
   dataIndex?: number;
 }) {
-  // REMINDER: rerender the row when live mode is toggled - used to opacity the row
-  // via the `getRowClassName` prop - but for some reasons it wil render the row on data fetch
-  useQueryState("live", searchParamsParser.live);
   return (
     <TableRow
       ref={rowRef}
@@ -633,20 +590,30 @@ function Row<TData>({
         table.options.meta?.getRowClassName?.(row),
       )}
     >
-      {row.getVisibleCells().map((cell) => (
-        <TableCell
-          key={cell.id}
-          className={cn(
-            "truncate border-b border-border p-[12px]",
-            cell.column.columnDef.meta?.cellClassName,
-          )}
-          style={{
-            width: cell.column.id === "gpu_model" ? "auto" : `${cell.column.getSize()}px`,
-          }}
-        >
-          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-        </TableCell>
-      ))}
+      {row.getVisibleCells().map((cell) => {
+        const isCheckboxCell = cell.column.id === "blank";
+        const stopPropagation = (e: any) => {
+          e.stopPropagation();
+        };
+        return (
+          <TableCell
+            key={cell.id}
+            onClick={isCheckboxCell ? stopPropagation : undefined}
+            onMouseDown={isCheckboxCell ? stopPropagation : undefined}
+            onPointerDown={isCheckboxCell ? stopPropagation : undefined}
+            onKeyDown={isCheckboxCell ? stopPropagation : undefined}
+            className={cn(
+              "truncate border-b border-border p-[12px]",
+              cell.column.columnDef.meta?.cellClassName,
+            )}
+            style={{
+              width: cell.column.id === "gpu_model" ? "auto" : `${cell.column.getSize()}px`,
+            }}
+          >
+            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+          </TableCell>
+        );
+      })}
     </TableRow>
   );
 }

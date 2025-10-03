@@ -120,8 +120,8 @@ export const columns: ColumnDef<ColumnSchema>[] = [
     size: 1, // Use flex sizing instead of fixed pixels
     minSize: 250,
     meta: {
-      cellClassName: "overflow-hidden w-[250px] max-w-[250px] min-w-[250px] md:flex-1 md:max-w-none",
-      headerClassName: "text-center overflow-hidden w-[250px] max-w-[250px] min-w-[250px] md:flex-1 md:max-w-none",
+      cellClassName: "overflow-hidden min-w-[250px] w-[250px] max-w-[250px] md:flex-1 md:max-w-none",
+      headerClassName: "text-center overflow-hidden min-w-[250px] w-[250px] max-w-[250px] md:flex-1 md:max-w-none",
     },
   },
   {
