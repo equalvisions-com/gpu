@@ -10,8 +10,10 @@ import {
 } from "@/components/infinite-table/api/helpers";
 import { pricingCache } from "@/lib/redis";
 import { createHash } from "crypto";
+import { unstable_cache } from "next/cache";
+export const revalidate = 900;
 
-export const dynamic = "force-dynamic";
+ 
 
 export async function GET(req: NextRequest): Promise<Response> {
   try {
@@ -21,8 +23,15 @@ export async function GET(req: NextRequest): Promise<Response> {
 
     const search = searchParamsCache.parse(Object.fromEntries(_search));
 
-    // Read from Redis cache directly (avoid network hop)
-    const pricingSnapshots = await pricingCache.getAllPricingSnapshots();
+    // Read from Redis cache directly (avoid network hop) and cache base step
+    const getSnapshotsCached = unstable_cache(
+      async () => {
+        return await pricingCache.getAllPricingSnapshots();
+      },
+      ["pricing:snapshots"],
+      { revalidate: 900, tags: ["pricing"] }
+    );
+    const pricingSnapshots = await getSnapshotsCached();
 
     // Flatten all pricing data from all providers, only including GPU class rows
     const totalData: ColumnSchema[] = pricingSnapshots.flatMap((snapshot: any) =>
@@ -86,7 +95,11 @@ export async function GET(req: NextRequest): Promise<Response> {
       },
       prevCursor,
       nextCursor,
-    } satisfies InfiniteQueryResponse<ColumnSchema[], LogsMeta>);
+    } satisfies InfiniteQueryResponse<ColumnSchema[], LogsMeta>, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=86400',
+      },
+    });
   } catch (error) {
     console.error('Error in pricing API:', error);
     return Response.json(

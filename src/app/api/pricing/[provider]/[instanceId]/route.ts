@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { pricingCache } from '@/lib/redis';
+export const revalidate = 900;
 
-export const dynamic = 'force-dynamic';
+ 
 
 // GET /api/pricing/[provider]/[instanceId] - Returns pricing data for a specific instance
 export async function GET(request: NextRequest, { params }: { params: Promise<{ provider: string; instanceId: string }> }) {
@@ -22,10 +23,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       }, { status: 404 });
     }
 
-    // Set cache headers for Edge caching
+    // Set cache headers for Edge caching (instance-level lookups are still low-cardinality)
     const response = NextResponse.json(instanceData, {
       headers: {
-        'Cache-Control': 'no-store, max-age=0',
+        'Cache-Control': 'public, s-maxage=600, stale-while-revalidate=3600',
       },
     });
 

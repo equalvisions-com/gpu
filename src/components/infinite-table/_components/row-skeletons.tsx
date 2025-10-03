@@ -40,7 +40,7 @@ export function RowSkeletons<TData>({ table, rows = 10 }: RowSkeletonsProps<TDat
                     <Skeleton className="h-4 w-[6rem]" />
                   </div>
                 ) : id === "gpu_model" ? (
-                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-[200px]" />
                 ) : id === "price_hour_usd" ? (
                   <div className="flex items-center justify-center">
                     <Skeleton className="h-4 w-10" />

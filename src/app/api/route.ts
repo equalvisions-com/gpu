@@ -7,9 +7,11 @@ import type { SearchParamsType } from "@/components/infinite-table/search-params
 import { pricingCache } from "@/lib/redis";
 import { createHash } from "crypto";
 import { filterData, getFacetsFromData, percentileData, sliderFilterValues, sortData } from "@/components/infinite-table/api/helpers";
+import { unstable_cache } from "next/cache";
 import { logger } from "@/lib/logger";
+export const revalidate = 900;
 
-export const dynamic = "force-dynamic";
+ 
 
 export async function GET(req: NextRequest): Promise<Response> {
   try {
@@ -21,8 +23,16 @@ export async function GET(req: NextRequest): Promise<Response> {
 
     // Simpler path (≤1k rows): read snapshots, flatten, filter/sort/slice in memory
 
-    // Legacy path (in-memory)
-    const pricingSnapshots = await pricingCache.getAllPricingSnapshots();
+    // Cache the base flatten step keyed by provider snapshot versions
+    const getSnapshotsCached = unstable_cache(
+      async () => {
+        return await pricingCache.getAllPricingSnapshots();
+      },
+      ["pricing:snapshots"],
+      { revalidate: 900, tags: ["pricing"] }
+    );
+
+    const pricingSnapshots = await getSnapshotsCached();
 
     // Flatten all pricing data from all providers
     let totalData: RowWithId[] = pricingSnapshots.flatMap((snapshot) =>
@@ -100,7 +110,7 @@ export async function GET(req: NextRequest): Promise<Response> {
       nextCursor,
     } satisfies InfiniteQueryResponse<ColumnSchema[], LogsMeta>, {
       headers: {
-        'Cache-Control': 'no-store, max-age=0',
+        'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=86400',
       },
     });
     logger.info(JSON.stringify({ event: 'api.page', rowsReturned: rowsOut.length, latencyMs: Date.now() - t1 }));

@@ -38,7 +38,7 @@ export const dataOptions = (search: SearchParamsType) => {
         size: pageParam?.size,
         uuid: null,
       });
-      const response = await fetch(`/api${serialize}`);
+      const response = await fetch(`/api${serialize}` , { next: { revalidate: 900, tags: ['pricing'] } });
       const json = await response.json();
       return json as InfiniteQueryResponse<ColumnSchema[], LogsMeta>;
     },

@@ -3,6 +3,7 @@ import { coreweaveScraper, nebiusScraper, hyperstackScraper, runpodScraper, lamb
 import { pricingCache } from '@/lib/redis';
 import type { ProviderScraper } from '@/lib/providers';
 import { logger } from '@/lib/logger';
+import { revalidatePath, revalidateTag } from 'next/cache';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30; // Allow up to 30 seconds for scraping
@@ -31,6 +32,7 @@ export async function POST(request: NextRequest) {
       const startedAt = Date.now();
       const summary: Array<{ provider: string; rowsScraped: number; wasUpdated: boolean; duration: number }>
         = [];
+      let anyUpdated = false;
 
       for (const key of Object.keys(scrapers)) {
         const s = scrapers[key];
@@ -41,10 +43,17 @@ export async function POST(request: NextRequest) {
           const updated = await pricingCache.storePricingData(result, force);
           summary.push({ provider: key, rowsScraped: result.rows.length, wasUpdated: updated, duration: Date.now() - t0 });
           logger.info(`${key} scraping completed in ${Date.now() - t0}ms. Updated: ${updated}`);
+          if (updated) anyUpdated = true;
         } catch (e) {
           summary.push({ provider: key, rowsScraped: 0, wasUpdated: false, duration: Date.now() - t0 });
           logger.error(`${key} scraping failed:`, e);
         }
+      }
+      if (anyUpdated) {
+        revalidateTag('pricing');
+        revalidatePath('/api');
+        revalidatePath('/api/pricing');
+        revalidatePath('/api/infinite-table');
       }
 
       return NextResponse.json({
@@ -71,6 +80,13 @@ export async function POST(request: NextRequest) {
 
     // Store the results in Redis (only if content changed)
     const wasUpdated = await pricingCache.storePricingData(result, force);
+    if (wasUpdated) {
+      // Invalidate data/tagged caches and route caches
+      revalidateTag('pricing');
+      revalidatePath('/api');
+      revalidatePath('/api/pricing');
+      revalidatePath('/api/infinite-table');
+    }
 
     const duration = Date.now() - startTime;
 
@@ -110,6 +126,7 @@ export async function GET(request: NextRequest) {
         const startedAt = Date.now();
         const summary: Array<{ provider: string; rowsScraped: number; wasUpdated: boolean; duration: number }>
           = [];
+        let anyUpdated = false;
 
         for (const key of Object.keys(scrapers)) {
           const s = scrapers[key];
@@ -120,10 +137,17 @@ export async function GET(request: NextRequest) {
             const updated = await pricingCache.storePricingData(result, force);
             summary.push({ provider: key, rowsScraped: result.rows.length, wasUpdated: updated, duration: Date.now() - t0 });
             console.log(`[cron] ${key} scraping completed in ${Date.now() - t0}ms. Updated: ${updated}`);
+            if (updated) anyUpdated = true;
           } catch (e) {
             summary.push({ provider: key, rowsScraped: 0, wasUpdated: false, duration: Date.now() - t0 });
             console.error(`[cron] ${key} scraping failed:`, e);
           }
+        }
+        if (anyUpdated) {
+          revalidateTag('pricing');
+          revalidatePath('/api');
+          revalidatePath('/api/pricing');
+          revalidatePath('/api/infinite-table');
         }
 
         return NextResponse.json({
@@ -146,6 +170,12 @@ export async function GET(request: NextRequest) {
       console.log(`[cron] Starting ${provider} scraping job...`);
       const result = await scraper.scrape();
       const wasUpdated = await pricingCache.storePricingData(result, force);
+      if (wasUpdated) {
+        revalidateTag('pricing');
+        revalidatePath('/api');
+        revalidatePath('/api/pricing');
+        revalidatePath('/api/infinite-table');
+      }
       const duration = Date.now() - startTime;
       console.log(`[cron] ${provider} scraping completed in ${duration}ms. Updated: ${wasUpdated}`);
 

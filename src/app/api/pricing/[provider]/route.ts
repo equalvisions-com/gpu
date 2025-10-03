@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { pricingCache } from '@/lib/redis';
+export const revalidate = 900;
 
-export const dynamic = 'force-dynamic';
+ 
 
 // GET /api/pricing/[provider] - Returns pricing snapshot for a specific provider
 export async function GET(request: NextRequest, { params }: { params: Promise<{ provider: string }> }) {
@@ -22,10 +23,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       }, { status: 404 });
     }
 
-    // Set cache headers for Edge caching
+    // Set cache headers for Edge caching (provider-level snapshot)
     const response = NextResponse.json(snapshot, {
       headers: {
-        'Cache-Control': 'no-store, max-age=0',
+        'Cache-Control': 'public, s-maxage=600, stale-while-revalidate=3600',
       },
     });
 
