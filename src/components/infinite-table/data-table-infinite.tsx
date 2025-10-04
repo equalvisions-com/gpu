@@ -398,7 +398,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
               // REMINDER: https://stackoverflow.com/questions/50361698/border-style-do-not-work-with-sticky-position-element
               className="border-separate border-spacing-0 w-auto min-w-full"
               containerClassName={cn(
-                isMobile ? "" : "h-full max-h-[calc(100vh_-_var(--top-bar-height))] scrollbar-hide"
+                isMobile ? "" : "h-full max-h-[calc(100vh_-_var(--top-bar-height))] overscroll-none scrollbar-hide"
               )}
             >
               <TableHeader className={cn("sticky top-0 z-20 bg-background")}>

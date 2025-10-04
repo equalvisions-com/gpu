@@ -55,7 +55,7 @@ export default function RootLayout({
       className={`${GeistSans.variable} ${GeistMono.variable}`}
       suppressHydrationWarning
     >
-      <body className="min-h-[100dvh] bg-background antialiased">
+      <body className="min-h-[100dvh] bg-background antialiased overscroll-none">
         <PlausibleProvider domain="data-table.openstatus.dev">
           <ReactQueryProvider>
             <NuqsAdapter>
