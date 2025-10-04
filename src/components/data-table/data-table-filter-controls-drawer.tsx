@@ -36,7 +36,7 @@ export function DataTableFilterControlsDrawer() {
           aria-label="Toggle controls (Cmd+B)"
           title="Toggle controls (Cmd+B)"
         >
-          <FilterIcon className="h-4 w-4 text-muted-foreground" />
+          <FilterIcon className="h-4 w-4 text-muted-foreground" strokeWidth={1.75} />
         </Button>
       </DrawerTrigger>
       <DrawerContent className="max-h-[calc(100dvh-4rem)]">

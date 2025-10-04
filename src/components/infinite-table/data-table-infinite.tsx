@@ -45,6 +45,7 @@ import { searchParamsParser } from "./search-params";
 import { RowSkeletons } from "./_components/row-skeletons";
 import { useVirtualizer, useWindowVirtualizer } from "@tanstack/react-virtual";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { CheckedActionsIsland } from "./_components/checked-actions-island";
 
 // Floating Controls Button Component
 function FloatingControlsButton() {
@@ -144,6 +145,14 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   const [columnSizingInfo, setColumnSizingInfoState] = React.useState<ColumnSizingInfoState | null>(null);
   // Independent checkbox-only state (does not control the details pane)
   const [checkedRows, setCheckedRows] = React.useState<Record<string, boolean>>({});
+  const toggleCheckedRow = React.useCallback((rowId: string, next?: boolean) => {
+    setCheckedRows((prev) => {
+      const shouldCheck = typeof next === "boolean" ? next : !prev[rowId];
+      if (shouldCheck) return { ...prev, [rowId]: true };
+      const { [rowId]: _omit, ...rest } = prev;
+      return rest;
+    });
+  }, []);
 
   const setColumnSizingInfo = React.useCallback((updaterOrValue: ColumnSizingInfoState | ((old: ColumnSizingInfoState) => ColumnSizingInfoState)) => {
     setColumnSizingInfoState((prev) => {
@@ -329,14 +338,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
       sorting={sorting}
       rowSelection={rowSelection}
       checkedRows={checkedRows}
-      toggleCheckedRow={(rowId, next) => {
-        setCheckedRows((prev) => {
-          const shouldCheck = typeof next === "boolean" ? next : !prev[rowId];
-          if (shouldCheck) return { ...prev, [rowId]: true };
-          const { [rowId]: _omit, ...rest } = prev;
-          return rest;
-        });
-      }}
+      toggleCheckedRow={toggleCheckedRow}
       enableColumnOrdering={false}
       isLoading={isFetching || isLoading}
       getFacetedUniqueValues={getFacetedUniqueValues}
@@ -550,6 +552,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
           }}
         />
       </DataTableSheetDetails>
+      <CheckedActionsIsland />
       <FloatingControlsButton />
     </DataTableProvider>
   );
