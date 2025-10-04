@@ -150,6 +150,8 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   const [rowSelection, setRowSelection] =
     React.useState<RowSelectionState>(defaultRowSelection);
   const [columnSizingInfo, setColumnSizingInfoState] = React.useState<ColumnSizingInfoState | null>(null);
+  // Independent checkbox-only state (does not control the details pane)
+  const [checkedRows, setCheckedRows] = React.useState<Record<string, boolean>>({});
 
   const setColumnSizingInfo = React.useCallback((updaterOrValue: ColumnSizingInfoState | ((old: ColumnSizingInfoState) => ColumnSizingInfoState)) => {
     setColumnSizingInfoState((prev) => {
@@ -254,7 +256,21 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     // Note: we intentionally do not call getFilteredRowModel/getFacetedRowModel
     filterFns: { arrSome },
     debugAll: process.env.NEXT_PUBLIC_TABLE_DEBUG === "true",
-    meta: { getRowClassName, metadata: { totalRows, filterRows, totalRowsFetched } },
+    meta: {
+      getRowClassName,
+      isRowChecked: (rowId: string) => Boolean(checkedRows[rowId]),
+      toggleRowChecked: (rowId: string, next?: boolean) => {
+        setCheckedRows((prev) => {
+          const shouldCheck = typeof next === "boolean" ? next : !prev[rowId];
+          if (shouldCheck) {
+            return { ...prev, [rowId]: true };
+          }
+          const { [rowId]: _omit, ...rest } = prev;
+          return rest;
+        });
+      },
+      metadata: { totalRows, filterRows, totalRowsFetched },
+    },
   });
 
 
@@ -331,6 +347,15 @@ export function DataTableInfinite<TData, TValue, TMeta>({
       columnFilters={columnFilters}
       sorting={sorting}
       rowSelection={rowSelection}
+      checkedRows={checkedRows}
+      toggleCheckedRow={(rowId, next) => {
+        setCheckedRows((prev) => {
+          const shouldCheck = typeof next === "boolean" ? next : !prev[rowId];
+          if (shouldCheck) return { ...prev, [rowId]: true };
+          const { [rowId]: _omit, ...rest } = prev;
+          return rest;
+        });
+      }}
       enableColumnOrdering={false}
       isLoading={isFetching || isLoading}
       getFacetedUniqueValues={getFacetedUniqueValues}
@@ -480,6 +505,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                                   row={row}
                                   table={table}
                                   selected={row.getIsSelected()}
+                                checked={checkedRows[row.id] ?? false}
                                   rowRef={rowVirtualizer.measureElement}
                                 />
                               </React.Fragment>
@@ -558,6 +584,7 @@ function Row<TData>({
   row,
   table,
   selected,
+  checked,
   rowRef,
   dataIndex,
 }: {
@@ -565,6 +592,8 @@ function Row<TData>({
   table: TTable<TData>;
   // REMINDER: row.getIsSelected(); - just for memoization
   selected?: boolean;
+  // Memoize checked highlight without forcing full row rerender otherwise
+  checked?: boolean;
   // Used by the virtualizer to dynamically measure row height
   rowRef?: (el: HTMLTableRowElement | null) => void;
   // Virtual index for measurement mapping
@@ -577,6 +606,7 @@ function Row<TData>({
       id={row.id}
       tabIndex={0}
       data-state={selected && "selected"}
+      data-checked={checked ? "checked" : undefined}
       onClick={() => row.toggleSelected()}
       onKeyDown={(event) => {
         if (event.key === "Enter") {
@@ -586,7 +616,7 @@ function Row<TData>({
       }}
       className={cn(
         "[&>:not(:last-child)]:border-r",
-        "outline-1 -outline-offset-1 outline-primary transition-colors focus-visible:bg-muted/50 focus-visible:outline data-[state=selected]:outline",
+        "outline-1 -outline-offset-1 outline-primary transition-colors focus-visible:bg-muted/50 focus-visible:outline data-[state=selected]:outline data-[checked=checked]:bg-muted/50",
         table.options.meta?.getRowClassName?.(row),
       )}
     >
@@ -621,5 +651,5 @@ function Row<TData>({
 const MemoizedRow = React.memo(
   Row,
   (prev, next) =>
-    prev.row.id === next.row.id && prev.selected === next.selected,
+    prev.row.id === next.row.id && prev.selected === next.selected && prev.checked === next.checked,
 ) as typeof Row;

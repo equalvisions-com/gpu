@@ -1,14 +1,11 @@
 "use client";
-
-import { InputWithAddons } from "@/components/custom/input-with-addons";
 import { useDataTable } from "@/components/data-table/data-table-provider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCompactNumber } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { Search } from "lucide-react";
-import { useState } from "react";
+ 
 import type { DataTableCheckboxFilterField } from "./types";
 
 export function DataTableFilterCheckbox<TData>({
@@ -17,7 +14,6 @@ export function DataTableFilterCheckbox<TData>({
   component,
 }: DataTableCheckboxFilterField<TData>) {
   const value = _value as string;
-  const [inputValue, setInputValue] = useState("");
   const { table, columnFilters, isLoading, getFacetedUniqueValues } =
     useDataTable();
   const column = table.getColumn(value);
@@ -28,12 +24,8 @@ export function DataTableFilterCheckbox<TData>({
 
   const Component = component;
 
-  // filter out the options based on the input value
-  const filterOptions = options?.filter(
-    (option) =>
-      inputValue === "" ||
-      option.label.toLowerCase().includes(inputValue.toLowerCase()),
-  );
+  // show all options without a search filter
+  const filterOptions = options;
 
   // CHECK: it could be filterValue or searchValue
   const filters = filterValue
@@ -60,15 +52,6 @@ export function DataTableFilterCheckbox<TData>({
 
   return (
     <div className="grid gap-2">
-      {options && options.length > 4 ? (
-        <InputWithAddons
-          placeholder="Search"
-          leading={<Search className="mt-0.5 h-4 w-4" />}
-          containerClassName="h-9 rounded-lg"
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-        />
-      ) : null}
       {/* FIXME: due to the added max-h and overflow-y-auto, the hover state and border is laying on top of the scroll bar */}
       <div className="max-h-[200px] overflow-y-auto rounded-lg border border-border empty:border-none">
         {filterOptions

@@ -19,6 +19,7 @@ import {
 import { cn } from "@/lib/utils";
 import { HoverCardPortal } from "@radix-ui/react-hover-card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useDataTable } from "@/components/data-table/data-table-provider";
 import type { ColumnDef } from "@tanstack/react-table";
 import { HoverCardTimestamp } from "./_components/hover-card-timestamp";
 import type { ColumnSchema } from "./schema";
@@ -127,14 +128,19 @@ export const columns: ColumnDef<ColumnSchema>[] = [
   {
     id: "blank",
     header: "",
-    cell: () => (
-      <div
-        className="flex items-center justify-center h-full"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <Checkbox />
-      </div>
-    ),
+    cell: ({ row }) => {
+      const { checkedRows, toggleCheckedRow } = useDataTable();
+      const stop = (e: any) => e.stopPropagation();
+      return (
+        <div className="flex items-center justify-center h-full" onClick={stop} onMouseDown={stop} onPointerDown={stop} onKeyDown={stop}>
+          <Checkbox
+            checked={checkedRows[row.id] ?? false}
+            onCheckedChange={(next) => toggleCheckedRow(row.id, Boolean(next))}
+            aria-label={`Check row ${row.id}`}
+          />
+        </div>
+      );
+    },
     size: 45,
     minSize: 45,
     maxSize: 45,

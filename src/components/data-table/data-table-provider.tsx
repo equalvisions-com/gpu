@@ -20,6 +20,9 @@ interface DataTableStateContextType {
   columnOrder: string[];
   pagination: PaginationState;
   enableColumnOrdering: boolean;
+  // Independent checkbox state for rows (separate from selection)
+  checkedRows: Record<string, boolean>;
+  toggleCheckedRow: (rowId: string, next?: boolean) => void;
 }
 
 interface DataTableBaseContextType<TData = unknown, TValue = unknown> {
@@ -62,6 +65,8 @@ export function DataTableProvider<TData, TValue>({
       columnOrder: props.columnOrder ?? [],
       pagination: props.pagination ?? { pageIndex: 0, pageSize: 10 },
       enableColumnOrdering: props.enableColumnOrdering ?? false,
+      checkedRows: props.checkedRows ?? {},
+      toggleCheckedRow: props.toggleCheckedRow ?? (() => {}),
     }),
     [
       props.columnFilters,
@@ -76,6 +81,8 @@ export function DataTableProvider<TData, TValue>({
       props.isLoading,
       props.getFacetedUniqueValues,
       props.getFacetedMinMaxValues,
+      props.checkedRows,
+      props.toggleCheckedRow,
     ],
   );
 

@@ -14,7 +14,7 @@ export const filterFields: DataTableFilterField<ColumnSchema>[] = [
   {
     label: "Provider",
     value: "provider",
-    type: "input",
+    type: "checkbox",
   },
   {
     label: "GPU Model",

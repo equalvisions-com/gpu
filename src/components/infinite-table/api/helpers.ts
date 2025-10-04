@@ -101,13 +101,21 @@ export function filterData(
         continue;
       }
 
-      // Handle string filters (provider, gpu_model with fallback to item)
-      if (key === "provider" && typeof filter === 'string') {
+      // Handle provider: allow array (checkbox union) or string (back-compat)
+      if (key === "provider") {
         const value = row.provider;
-        if (typeof value === 'string' && !value.toLowerCase().includes(filter.toLowerCase())) {
-          return false;
+        if (Array.isArray(filter)) {
+          // union: any match passes
+          const ok = filter.some((f) => String(value) === String(f));
+          if (!ok) return false;
+          continue;
         }
-        continue;
+        if (typeof filter === 'string') {
+          if (typeof value === 'string' && !value.toLowerCase().includes(filter.toLowerCase())) {
+            return false;
+          }
+          continue;
+        }
       }
 
       if (key === "gpu_model" && typeof filter === 'string') {
