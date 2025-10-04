@@ -25,6 +25,19 @@ import { HoverCardTimestamp } from "./_components/hover-card-timestamp";
 import type { ColumnSchema } from "./schema";
 
 
+function RowCheckboxCell({ rowId }: { rowId: string }) {
+  const { checkedRows, toggleCheckedRow } = useDataTable();
+  const isChecked = checkedRows[rowId] ?? false;
+  return (
+    <Checkbox
+      checked={isChecked}
+      onCheckedChange={(next) => toggleCheckedRow(rowId, Boolean(next))}
+      aria-label={`Check row ${rowId}`}
+    />
+  );
+}
+
+
 export const columns: ColumnDef<ColumnSchema>[] = [
   {
     accessorKey: "provider",
@@ -129,15 +142,10 @@ export const columns: ColumnDef<ColumnSchema>[] = [
     id: "blank",
     header: "",
     cell: ({ row }) => {
-      const { checkedRows, toggleCheckedRow } = useDataTable();
       const stop = (e: any) => e.stopPropagation();
       return (
         <div className="flex items-center justify-center h-full" onClick={stop} onMouseDown={stop} onPointerDown={stop} onKeyDown={stop}>
-          <Checkbox
-            checked={checkedRows[row.id] ?? false}
-            onCheckedChange={(next) => toggleCheckedRow(row.id, Boolean(next))}
-            aria-label={`Check row ${row.id}`}
-          />
+          <RowCheckboxCell rowId={row.id} />
         </div>
       );
     },
