@@ -141,6 +141,9 @@ export const columns: ColumnDef<ColumnSchema>[] = [
   {
     id: "blank",
     header: "",
+    enableSorting: false,
+    enableHiding: false,
+    enableResizing: false,
     cell: ({ row }) => {
       const stop = (e: any) => e.stopPropagation();
       return (

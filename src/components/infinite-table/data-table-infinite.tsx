@@ -37,15 +37,7 @@ import type {
   TableOptions,
   Table as TTable,
 } from "@tanstack/react-table";
-import {
-  flexRender,
-  getCoreRowModel,
-  getFacetedRowModel,
-  getFilteredRowModel,
-  getFacetedMinMaxValues as getTTableFacetedMinMaxValues,
-  getFacetedUniqueValues as getTTableFacetedUniqueValues,
-  useReactTable,
-} from "@tanstack/react-table";
+import { flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { useQueryStates, type ParserBuilder } from "nuqs";
 import * as React from "react";
 import { SocialsFooter } from "./_components/socials-footer";

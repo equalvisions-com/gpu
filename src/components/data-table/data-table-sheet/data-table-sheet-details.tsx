@@ -79,6 +79,13 @@ export function DataTableSheetDetails({
         e.preventDefault();
         onNext();
       }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        // Close the sheet and return focus to the selected row
+        const el = selectedRowKey ? document.getElementById(selectedRowKey) : null;
+        table.resetRowSelection();
+        setTimeout(() => el?.focus(), 0);
+      }
     };
 
     document.addEventListener("keydown", down);
