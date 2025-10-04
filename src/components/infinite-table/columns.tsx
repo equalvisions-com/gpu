@@ -23,6 +23,7 @@ import { useDataTable } from "@/components/data-table/data-table-provider";
 import type { ColumnDef } from "@tanstack/react-table";
 import { HoverCardTimestamp } from "./_components/hover-card-timestamp";
 import type { ColumnSchema } from "./schema";
+import { DataTableFilterControlsDrawer } from "@/components/data-table/data-table-filter-controls-drawer";
 
 
 function RowCheckboxCell({ rowId }: { rowId: string }) {
@@ -140,7 +141,11 @@ export const columns: ColumnDef<ColumnSchema>[] = [
   },
   {
     id: "blank",
-    header: "",
+    header: () => (
+      <div className="flex items-center justify-center">
+        <DataTableFilterControlsDrawer />
+      </div>
+    ),
     enableSorting: false,
     enableHiding: false,
     enableResizing: false,

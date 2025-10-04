@@ -32,11 +32,11 @@ export function DataTableFilterControlsDrawer() {
           ref={isMobile ? triggerButtonRef : null}
           variant="ghost"
           size="icon"
-          className="h-9 w-9"
+          className="h-9 w-9 hover:bg-transparent"
           aria-label="Toggle controls (Cmd+B)"
           title="Toggle controls (Cmd+B)"
         >
-          <FilterIcon className="w-4 h-4" />
+          <FilterIcon className="h-4 w-4 text-muted-foreground" />
         </Button>
       </DrawerTrigger>
       <DrawerContent className="max-h-[calc(100dvh-4rem)]">
