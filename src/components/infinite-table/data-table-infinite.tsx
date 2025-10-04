@@ -258,17 +258,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     debugAll: process.env.NEXT_PUBLIC_TABLE_DEBUG === "true",
     meta: {
       getRowClassName,
-      isRowChecked: (rowId: string) => Boolean(checkedRows[rowId]),
-      toggleRowChecked: (rowId: string, next?: boolean) => {
-        setCheckedRows((prev) => {
-          const shouldCheck = typeof next === "boolean" ? next : !prev[rowId];
-          if (shouldCheck) {
-            return { ...prev, [rowId]: true };
-          }
-          const { [rowId]: _omit, ...rest } = prev;
-          return rest;
-        });
-      },
       metadata: { totalRows, filterRows, totalRowsFetched },
     },
   });
@@ -606,6 +595,7 @@ function Row<TData>({
       id={row.id}
       tabIndex={0}
       data-state={selected && "selected"}
+      aria-selected={row.getIsSelected()}
       data-checked={checked ? "checked" : undefined}
       onClick={() => row.toggleSelected()}
       onKeyDown={(event) => {
