@@ -58,7 +58,7 @@ function FloatingControlsButton() {
       size="sm"
       variant="default"
       onClick={() => setOpen((prev) => prev !== null ? !prev : false)}
-      className="fixed bottom-6 left-6 z-50 h-12 w-12 rounded-full shadow-lg transition-all duration-300 hover:scale-105"
+      className="fixed bottom-6 left-6 z-[var(--z-floating-button)] h-12 w-12 rounded-full shadow-lg transition-all duration-300 hover:scale-105"
       aria-label={open ? "Hide controls" : "Show controls"}
     >
       {open ? (

@@ -27,7 +27,7 @@ import { DataTableFilterControlsDrawer } from "@/components/data-table/data-tabl
 
 
 function RowCheckboxCell({ rowId }: { rowId: string }) {
-  const { checkedRows, toggleCheckedRow } = useDataTable();
+  const { checkedRows, toggleCheckedRow } = useDataTable<ColumnSchema, unknown>();
   const isChecked = checkedRows[rowId] ?? false;
   return (
     <Checkbox
