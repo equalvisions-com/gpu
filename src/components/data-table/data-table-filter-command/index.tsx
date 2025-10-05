@@ -129,7 +129,7 @@ export function DataTableFilterCommand({
       <button
         type="button"
         className={cn(
-          "group flex w-full items-center rounded-lg border border-input bg-background px-3 text-muted-foreground ring-offset-background focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 hover:bg-accent/50 hover:text-accent-foreground",
+          "group flex w-full items-center rounded-lg border border-border bg-background px-3 text-muted-foreground ring-offset-background focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 hover:bg-accent/50 hover:text-accent-foreground",
           open ? "hidden" : "visible",
         )}
         onClick={() => setOpen(true)}
@@ -139,11 +139,11 @@ export function DataTableFilterCommand({
         ) : (
           <Search className="mr-2 h-4 w-4 shrink-0 text-muted-foreground opacity-50 group-hover:text-popover-foreground" />
         )}
-        <span className="h-11 w-full max-w-sm truncate py-3 text-left text-sm outline-none disabled:cursor-not-allowed disabled:opacity-50 md:max-w-xl lg:max-w-4xl xl:max-w-5xl">
+        <span className="h-10 align-top w-full max-w-sm truncate py-3 text-left text-sm outline-none disabled:cursor-not-allowed disabled:opacity-50 md:max-w-xl lg:max-w-4xl xl:max-w-5xl">
           {inputValue.trim() ? (
             <span className="text-foreground">{inputValue}</span>
           ) : (
-            <span>Search data table...</span>
+            <span>Search</span>
           )}
         </span>
         <Kbd className="ml-auto text-muted-foreground group-hover:text-accent-foreground">
@@ -193,7 +193,7 @@ export function DataTableFilterCommand({
             const word = getWordByCaretPosition({ value, caretPosition });
             setCurrentWord(word);
           }}
-          placeholder="Search data table..."
+          placeholder="Search"
           className="text-foreground"
         />
         <div className="relative">

@@ -9,7 +9,6 @@ import {
   TableRow,
 } from "@/components/custom/table";
 import { DataTableFilterCommand } from "@/components/data-table/data-table-filter-command";
-import { DataTableFilterControls } from "@/components/data-table/data-table-filter-controls";
 import { DataTableProvider } from "@/components/data-table/data-table-provider";
 import { MemoizedDataTableSheetContent } from "@/components/data-table/data-table-sheet/data-table-sheet-content";
 import { DataTableSheetDetails } from "@/components/data-table/data-table-sheet/data-table-sheet-details";
@@ -40,6 +39,7 @@ import { searchParamsParser } from "./search-params";
 import { RowSkeletons } from "./_components/row-skeletons";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { CheckedActionsIsland } from "./_components/checked-actions-island";
+import SidebarNav from "./_components/sidebar-nav";
 
 // FloatingControlsButton removed
 
@@ -297,6 +297,8 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   }, [rowSelection, selectedRow, isLoading, isFetching]);
 
 
+  
+
 
   return (
     <DataTableProvider
@@ -329,11 +331,11 @@ export function DataTableInfinite<TData, TValue, TMeta>({
           <div className="border-b border-border bg-background p-2 md:sticky md:top-0">
             <DataTableToolbar />
           </div>
-          <div className="p-2">
+          <div className="p-[12px] border-b border-border">
             <DataTableFilterCommand searchParamsParser={searchParamsParser} />
           </div>
-          <div className="flex-1 p-2 sm:overflow-y-scroll scrollbar-hide">
-            <DataTableFilterControls />
+          <div className="flex-1 p-[12px] sm:overflow-y-scroll scrollbar-hide">
+            <SidebarNav />
           </div>
           <div className="border-t border-border bg-background p-4 md:sticky md:bottom-0">
             <SocialsFooter />
@@ -551,6 +553,7 @@ function Row<TData>({
       ref={rowRef}
       data-index={dataIndex}
       id={row.id}
+      data-can-hover={typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches ? true : undefined}
       tabIndex={0}
       data-state={selected && "selected"}
       aria-selected={row.getIsSelected()}
