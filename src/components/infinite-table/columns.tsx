@@ -21,6 +21,7 @@ import { HoverCardPortal } from "@radix-ui/react-hover-card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useDataTable } from "@/components/data-table/data-table-provider";
 import type { ColumnDef } from "@tanstack/react-table";
+import Image from "next/image";
 import { HoverCardTimestamp } from "./_components/hover-card-timestamp";
 import type { ColumnSchema } from "./schema";
 import { DataTableFilterControlsDrawer } from "@/components/data-table/data-table-filter-controls-drawer";
@@ -50,60 +51,28 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       return (
         <div className="flex items-center gap-2">
           {provider === "coreweave" && (
-            <img
-              src="/logos/coreweave.png"
-              alt="CoreWeave"
-              className="h-5 w-5 rounded"
-            />
+            <Image src="/logos/coreweave.png" alt="CoreWeave" width={20} height={20} className="rounded" />
           )}
           {provider === "nebius" && (
-            <img
-              src="/logos/nebius.png"
-              alt="Nebius"
-              className="h-5 w-5 rounded"
-            />
+            <Image src="/logos/nebius.png" alt="Nebius" width={20} height={20} className="rounded" />
           )}
           {provider === "hyperstack" && (
-            <img
-              src="/logos/hyperstack.png"
-              alt="Hyperstack"
-              className="h-5 w-5 rounded"
-            />
+            <Image src="/logos/hyperstack.png" alt="Hyperstack" width={20} height={20} className="rounded" />
           )}
           {provider === "runpod" && (
-            <img
-              src="/logos/runpod.png"
-              alt="RunPod"
-              className="h-5 w-5 rounded"
-            />
+            <Image src="/logos/runpod.png" alt="RunPod" width={20} height={20} className="rounded" />
           )}
           {provider === "lambda" && (
-            <img
-              src="/logos/lambda.png"
-              alt="Lambda"
-              className="h-5 w-5 rounded"
-            />
+            <Image src="/logos/lambda.png" alt="Lambda" width={20} height={20} className="rounded" />
           )}
           {provider === "digitalocean" && (
-            <img
-              src="/logos/digitalocean.png"
-              alt="DigitalOcean"
-              className="h-5 w-5 rounded"
-            />
+            <Image src="/logos/digitalocean.png" alt="DigitalOcean" width={20} height={20} className="rounded" />
           )}
           {provider === "oracle" && (
-            <img
-              src="/logos/oracle.png"
-              alt="Oracle"
-              className="h-5 w-5 rounded"
-            />
+            <Image src="/logos/oracle.png" alt="Oracle" width={20} height={20} className="rounded" />
           )}
           {provider === "crusoe" && (
-            <img
-              src="/logos/crusoe.png"
-              alt="Crusoe"
-              className="h-5 w-5 rounded"
-            />
+            <Image src="/logos/crusoe.png" alt="Crusoe" width={20} height={20} className="rounded" />
           )}
           <span className="font-medium capitalize">{provider}</span>
         </div>
@@ -180,7 +149,7 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       return (
         <>
           <span className="font-mono font-medium">${price.toFixed(2)}</span>{" "}
-          <span className="font-mono text-muted-foreground">/HR</span>
+          <span className="font-mono text-muted-foreground">/hr</span>
         </>
       );
     },
@@ -195,7 +164,7 @@ export const columns: ColumnDef<ColumnSchema>[] = [
   {
     accessorKey: "gpu_count",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Config" centerTitle />
+      <DataTableColumnHeader column={column} title="GPUs" centerTitle />
     ),
     cell: ({ row }) => {
       const gpuCount = row.getValue<ColumnSchema["gpu_count"]>("gpu_count");
@@ -288,7 +257,7 @@ export const columns: ColumnDef<ColumnSchema>[] = [
   {
     accessorKey: "type",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Type" />
+      <DataTableColumnHeader column={column} title="Config" centerTitle />
     ),
     cell: ({ row }) => {
       const type = row.getValue<ColumnSchema["type"]>("type");

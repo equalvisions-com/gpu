@@ -38,7 +38,7 @@ import * as React from "react";
 import { SocialsFooter } from "./_components/socials-footer";
 import { searchParamsParser } from "./search-params";
 import { RowSkeletons } from "./_components/row-skeletons";
-import { useVirtualizer, useWindowVirtualizer } from "@tanstack/react-virtual";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { CheckedActionsIsland } from "./_components/checked-actions-island";
 
 // FloatingControlsButton removed
@@ -161,7 +161,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   // IntersectionObserver sentinel for near-bottom prefetch
   const sentinelRef = React.useCallback((node: HTMLTableRowElement | null) => {
     if (!node) return;
-    const root = undefined; // observe viewport for window-based scrolling
+    const root = (containerRef.current ?? undefined);
     const observer = new IntersectionObserver(
       (entries) => {
         const entry = entries[0];
@@ -173,7 +173,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     );
     observer.observe(node);
     return () => observer.disconnect();
-  }, [fetchNextPage, hasNextPage, isFetching]);
+  }, [containerRef, fetchNextPage, hasNextPage, isFetching]);
 
   React.useEffect(() => {
     const observer = new ResizeObserver(() => {
@@ -241,13 +241,14 @@ export function DataTableInfinite<TData, TValue, TMeta>({
 
   // Virtualizer
   const rows = table.getRowModel().rows;
-  const windowVirtualizer = useWindowVirtualizer({
+  const containerVirtualizer = useVirtualizer({
     count: rows.length,
+    getScrollElement: () => containerRef.current,
     estimateSize: () => 45,
     getItemKey: (index) => rows[index]?.id ?? index,
-    overscan: 48,
+    overscan: 40,
   });
-  const rowVirtualizer = windowVirtualizer;
+  const rowVirtualizer = containerVirtualizer;
 
   React.useEffect(() => {
     const columnFiltersWithNullable = filterFields.map((field) => {
@@ -354,11 +355,14 @@ export function DataTableInfinite<TData, TValue, TMeta>({
           <div className="z-0">
             <Table
               ref={tableRef}
+              onScroll={onScroll}
               containerRef={containerRef}
-              containerOverflowVisible={true}
+              containerOverflowVisible={false}
               // REMINDER: https://stackoverflow.com/questions/50361698/border-style-do-not-work-with-sticky-position-element
               className="border-separate border-spacing-0 w-auto min-w-full"
-              containerClassName={cn("")}
+              containerClassName={cn(
+                "h-full max-h-[calc(100vh_-_var(--top-bar-height))] overscroll-x-none scrollbar-hide"
+              )}
             >
               <TableHeader className={cn("sticky top-0 z-20 bg-background")}>
                 {table.getHeaderGroups().map((headerGroup) => (
@@ -449,6 +453,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                                   table={table}
                                   selected={row.getIsSelected()}
                                 checked={checkedRows[row.id] ?? false}
+                                  rowRef={rowVirtualizer.measureElement}
                                 />
                               </React.Fragment>
                             );
@@ -559,7 +564,7 @@ function Row<TData>({
       }}
       className={cn(
         "[&>:not(:last-child)]:border-r",
-        "outline-1 -outline-offset-1 outline-primary transition-colors focus-visible:bg-muted/50 focus-visible:outline data-[state=selected]:outline data-[checked=checked]:bg-muted/50",
+        "transition-colors focus-visible:bg-muted/50 data-[checked=checked]:bg-muted/50 hover:cursor-pointer",
         table.options.meta?.getRowClassName?.(row),
       )}
     >
@@ -577,6 +582,7 @@ function Row<TData>({
             onKeyDown={isCheckboxCell ? stopPropagation : undefined}
             className={cn(
               "truncate border-b border-border p-[12px]",
+              isCheckboxCell && "cursor-default hover:cursor-default",
               cell.column.columnDef.meta?.cellClassName,
             )}
             style={{

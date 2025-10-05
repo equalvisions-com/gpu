@@ -12,11 +12,10 @@ const Table = React.forwardRef<HTMLTableElement, TableProps>(
   ({ className, containerClassName, containerRef, containerOverflowVisible, onScroll, ...props }, ref) => (
     <div
       ref={containerRef}
-      className={cn("w-full overscroll-none", containerOverflowVisible ? "overflow-visible" : "overflow-auto", containerClassName)}
+      className={cn("w-full overscroll-x-none", containerOverflowVisible ? "overflow-visible" : "overflow-auto", containerClassName)}
       style={{
-        // Prevent overscroll bounce on both axes for scroll container
-        overscrollBehaviorX: 'none',
-        overscrollBehaviorY: 'none'
+        // Prevent horizontal overscroll bounce for scroll container
+        overscrollBehaviorX: 'none'
       }}
       // REMINDER: we are not scrolling the table, but the container
       {...{ onScroll }}
