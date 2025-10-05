@@ -38,7 +38,7 @@ import * as React from "react";
 import { SocialsFooter } from "./_components/socials-footer";
 import { searchParamsParser } from "./search-params";
 import { RowSkeletons } from "./_components/row-skeletons";
-import { useVirtualizer } from "@tanstack/react-virtual";
+import { useVirtualizer, useWindowVirtualizer } from "@tanstack/react-virtual";
 import { CheckedActionsIsland } from "./_components/checked-actions-island";
 
 // FloatingControlsButton removed
@@ -161,7 +161,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   // IntersectionObserver sentinel for near-bottom prefetch
   const sentinelRef = React.useCallback((node: HTMLTableRowElement | null) => {
     if (!node) return;
-    const root = (containerRef.current ?? undefined);
+    const root = undefined; // observe viewport for window-based scrolling
     const observer = new IntersectionObserver(
       (entries) => {
         const entry = entries[0];
@@ -173,7 +173,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     );
     observer.observe(node);
     return () => observer.disconnect();
-  }, [containerRef, fetchNextPage, hasNextPage, isFetching]);
+  }, [fetchNextPage, hasNextPage, isFetching]);
 
   React.useEffect(() => {
     const observer = new ResizeObserver(() => {
@@ -241,14 +241,13 @@ export function DataTableInfinite<TData, TValue, TMeta>({
 
   // Virtualizer
   const rows = table.getRowModel().rows;
-  const containerVirtualizer = useVirtualizer({
+  const windowVirtualizer = useWindowVirtualizer({
     count: rows.length,
-    getScrollElement: () => containerRef.current,
-    estimateSize: () => 40,
+    estimateSize: () => 45,
     getItemKey: (index) => rows[index]?.id ?? index,
-    overscan: 24,
+    overscan: 48,
   });
-  const rowVirtualizer = containerVirtualizer;
+  const rowVirtualizer = windowVirtualizer;
 
   React.useEffect(() => {
     const columnFiltersWithNullable = filterFields.map((field) => {
@@ -355,14 +354,11 @@ export function DataTableInfinite<TData, TValue, TMeta>({
           <div className="z-0">
             <Table
               ref={tableRef}
-              onScroll={onScroll}
               containerRef={containerRef}
-              containerOverflowVisible={false}
+              containerOverflowVisible={true}
               // REMINDER: https://stackoverflow.com/questions/50361698/border-style-do-not-work-with-sticky-position-element
               className="border-separate border-spacing-0 w-auto min-w-full"
-              containerClassName={cn(
-                "h-full max-h-[calc(100vh_-_var(--top-bar-height))] overscroll-none scrollbar-hide"
-              )}
+              containerClassName={cn("")}
             >
               <TableHeader className={cn("sticky top-0 z-20 bg-background")}>
                 {table.getHeaderGroups().map((headerGroup) => (
@@ -453,7 +449,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                                   table={table}
                                   selected={row.getIsSelected()}
                                 checked={checkedRows[row.id] ?? false}
-                                  rowRef={rowVirtualizer.measureElement}
                                 />
                               </React.Fragment>
                             );
