@@ -131,16 +131,16 @@ export async function GET(request: NextRequest) {
         for (const key of Object.keys(scrapers)) {
           const s = scrapers[key];
           const t0 = Date.now();
-          console.log(`[cron] Starting ${key} scraping job...`);
+          logger.info(`[cron] Starting ${key} scraping job...`);
           try {
             const result = await s.scrape();
             const updated = await pricingCache.storePricingData(result, force);
             summary.push({ provider: key, rowsScraped: result.rows.length, wasUpdated: updated, duration: Date.now() - t0 });
-            console.log(`[cron] ${key} scraping completed in ${Date.now() - t0}ms. Updated: ${updated}`);
+            logger.info(`[cron] ${key} scraping completed in ${Date.now() - t0}ms. Updated: ${updated}`);
             if (updated) anyUpdated = true;
           } catch (e) {
             summary.push({ provider: key, rowsScraped: 0, wasUpdated: false, duration: Date.now() - t0 });
-            console.error(`[cron] ${key} scraping failed:`, e);
+            logger.error(`[cron] ${key} scraping failed:`, e);
           }
         }
         if (anyUpdated) {
@@ -167,7 +167,7 @@ export async function GET(request: NextRequest) {
       }
 
       const startTime = Date.now();
-      console.log(`[cron] Starting ${provider} scraping job...`);
+      logger.info(`[cron] Starting ${provider} scraping job...`);
       const result = await scraper.scrape();
       const wasUpdated = await pricingCache.storePricingData(result, force);
       if (wasUpdated) {
@@ -177,7 +177,7 @@ export async function GET(request: NextRequest) {
         revalidatePath('/api/infinite-table');
       }
       const duration = Date.now() - startTime;
-      console.log(`[cron] ${provider} scraping completed in ${duration}ms. Updated: ${wasUpdated}`);
+      logger.info(`[cron] ${provider} scraping completed in ${duration}ms. Updated: ${wasUpdated}`);
 
       return NextResponse.json({
         success: true,

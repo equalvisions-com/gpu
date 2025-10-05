@@ -2,7 +2,6 @@
 
 import { useDataTable } from "@/components/data-table/data-table-provider";
 import { formatCompactNumber } from "@/lib/format";
-import { useControls } from "@/providers/controls";
 import { useMemo } from "react";
 import { DataTableFilterControlsDrawer } from "./data-table-filter-controls-drawer";
 import { DataTableResetButton } from "./data-table-reset-button";
@@ -13,8 +12,6 @@ interface DataTableToolbarProps {
 
 export function DataTableToolbar({ renderActions }: DataTableToolbarProps) {
   const { table, isLoading, columnFilters } = useDataTable();
-  // Note: open is not used in this component, but we destructure it to avoid linting issues
-  const { open: _open } = useControls();
   const filters = table.getState().columnFilters;
 
   // Server-mode: render counts based on meta passed into sheet/details.

@@ -1,6 +1,5 @@
 "use client";
 
-import { ControlsProvider } from "@/providers/controls";
 import { useHotKey } from "@/hooks/use-hot-key";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import type { Table as TTable } from "@tanstack/react-table";
@@ -15,6 +14,7 @@ import { searchParamsParser } from "./search-params";
 import type { RowWithId } from "@/types/api";
 
 export function Client() {
+  const contentRef = React.useRef<HTMLTableSectionElement>(null);
   const [search] = useQueryStates(searchParamsParser);
   const {
     data,
@@ -24,7 +24,9 @@ export function Client() {
     fetchNextPage,
     hasNextPage,
   } = useInfiniteQuery(dataOptions(search));
-  useResetFocus();
+  useHotKey(() => {
+    contentRef.current?.focus();
+  }, ".");
 
   const flatData: RowWithId[] = React.useMemo(() => {
     // Server guarantees stable, non-overlapping windows via deterministic sort + cursor
@@ -77,7 +79,6 @@ export function Client() {
   }, [facets]);
 
   return (
-    <ControlsProvider>
       <DataTableInfinite
       columns={columns}
       data={flatData}
@@ -107,20 +108,9 @@ export function Client() {
       getFacetedMinMaxValues={getFacetedMinMaxValues(facets)}
       renderSheetTitle={(props) => props.row?.original.uuid}
       searchParamsParser={searchParamsParser}
+      focusTargetRef={contentRef}
     />
-    </ControlsProvider>
   );
-}
-
-function useResetFocus() {
-  useHotKey(() => {
-    // FIXME: some dedicated div[tabindex="0"] do not auto-unblur (e.g. the DataTableFilterResetButton)
-    // REMINDER: we cannot just document.activeElement?.blur(); as the next tab will focus the next element in line,
-    // which is not what we want. We want to reset entirely.
-    document.body.setAttribute("tabindex", "0");
-    document.body.focus();
-    document.body.removeAttribute("tabindex");
-  }, ".");
 }
 
 

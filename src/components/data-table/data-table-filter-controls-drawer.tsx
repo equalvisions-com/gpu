@@ -14,12 +14,9 @@ import { FilterIcon } from "lucide-react";
 import { DataTableFilterControls } from "./data-table-filter-controls";
 import { useHotKey } from "@/hooks/use-hot-key";
 import React from "react";
-import { Kbd } from "@/components/custom/kbd";
-import { useMediaQuery } from "@/hooks/use-media-query";
 
 export function DataTableFilterControlsDrawer() {
   const triggerButtonRef = React.useRef<HTMLButtonElement>(null);
-  const isMobile = useMediaQuery("(max-width: 640px)");
 
   useHotKey(() => {
     triggerButtonRef.current?.click();
@@ -29,7 +26,7 @@ export function DataTableFilterControlsDrawer() {
     <Drawer>
       <DrawerTrigger asChild>
         <Button
-          ref={isMobile ? triggerButtonRef : null}
+          ref={triggerButtonRef}
           variant="ghost"
           size="icon"
           className="h-9 w-9 hover:bg-transparent"

@@ -11,7 +11,6 @@ import {
 import { DataTableFilterCommand } from "@/components/data-table/data-table-filter-command";
 import { DataTableFilterControls } from "@/components/data-table/data-table-filter-controls";
 import { DataTableProvider } from "@/components/data-table/data-table-provider";
-import { DataTableResetButton } from "@/components/data-table/data-table-reset-button";
 import { MemoizedDataTableSheetContent } from "@/components/data-table/data-table-sheet/data-table-sheet-content";
 import { DataTableSheetDetails } from "@/components/data-table/data-table-sheet/data-table-sheet-details";
 import { DataTableToolbar } from "@/components/data-table/data-table-toolbar";
@@ -19,10 +18,6 @@ import type {
   DataTableFilterField,
   SheetField,
 } from "@/components/data-table/types";
-import { Button } from "@/components/ui/button";
-import { useHotKey } from "@/hooks/use-hot-key";
-import { useControls } from "@/providers/controls";
-import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { arrSome } from "@/lib/table/filterfns";
 import { cn } from "@/lib/utils";
 import { type FetchNextPageOptions } from "@tanstack/react-query";
@@ -43,32 +38,10 @@ import * as React from "react";
 import { SocialsFooter } from "./_components/socials-footer";
 import { searchParamsParser } from "./search-params";
 import { RowSkeletons } from "./_components/row-skeletons";
-import { useVirtualizer, useWindowVirtualizer } from "@tanstack/react-virtual";
-import { useMediaQuery } from "@/hooks/use-media-query";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { CheckedActionsIsland } from "./_components/checked-actions-island";
 
-// Floating Controls Button Component
-function FloatingControlsButton() {
-  const { open, setOpen } = useControls();
-
-  useHotKey(() => setOpen((prev) => prev !== null ? !prev : false), "b");
-
-  return (
-    <Button
-      size="sm"
-      variant="default"
-      onClick={() => setOpen((prev) => prev !== null ? !prev : false)}
-      className="fixed bottom-6 left-6 z-[var(--z-floating-button)] h-12 w-12 rounded-full shadow-lg transition-all duration-300 hover:scale-105"
-      aria-label={open ? "Hide controls" : "Show controls"}
-    >
-      {open ? (
-        <PanelLeftClose className="h-5 w-5" />
-      ) : (
-        <PanelLeftOpen className="h-5 w-5" />
-      )}
-    </Button>
-  );
-}
+// FloatingControlsButton removed
 
 // Note: chart groupings could be added later if needed
 export interface DataTableInfiniteProps<TData, TValue, TMeta> {
@@ -108,6 +81,8 @@ export interface DataTableInfiniteProps<TData, TValue, TMeta> {
   ) => Promise<unknown>;
   renderSheetTitle: (props: { row?: Row<TData> }) => React.ReactNode;
   searchParamsParser: Record<string, ParserBuilder<any>>;
+  // Optional ref target to programmatically focus the table body
+  focusTargetRef?: React.Ref<HTMLTableSectionElement>;
 }
 
 export function DataTableInfinite<TData, TValue, TMeta>({
@@ -135,6 +110,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   meta,
   renderSheetTitle,
   searchParamsParser,
+  focusTargetRef,
 }: DataTableInfiniteProps<TData, TValue, TMeta>) {
   const [columnFilters, setColumnFilters] =
     React.useState<ColumnFiltersState>(defaultColumnFilters);
@@ -168,7 +144,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   const containerRef = React.useRef<HTMLDivElement>(null);
   // searchParamsParser is provided as a prop
   const [_, setSearch] = useQueryStates(searchParamsParser);
-  const isMobile = useMediaQuery("(max-width: 640px)");
 
   const onScroll = React.useCallback(
     (e: React.UIEvent<HTMLElement>) => {
@@ -186,7 +161,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   // IntersectionObserver sentinel for near-bottom prefetch
   const sentinelRef = React.useCallback((node: HTMLTableRowElement | null) => {
     if (!node) return;
-    const root = isMobile ? undefined : (containerRef.current ?? undefined);
+    const root = (containerRef.current ?? undefined);
     const observer = new IntersectionObserver(
       (entries) => {
         const entry = entries[0];
@@ -198,7 +173,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     );
     observer.observe(node);
     return () => observer.disconnect();
-  }, [containerRef, fetchNextPage, hasNextPage, isFetching, isMobile]);
+  }, [containerRef, fetchNextPage, hasNextPage, isFetching]);
 
   React.useEffect(() => {
     const observer = new ResizeObserver(() => {
@@ -266,12 +241,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
 
   // Virtualizer
   const rows = table.getRowModel().rows;
-  const windowVirtualizer = useWindowVirtualizer({
-    count: rows.length,
-    estimateSize: () => 40,
-    getItemKey: (index) => rows[index]?.id ?? index,
-    overscan: 24,
-  });
   const containerVirtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => containerRef.current,
@@ -279,7 +248,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     getItemKey: (index) => rows[index]?.id ?? index,
     overscan: 24,
   });
-  const rowVirtualizer = isMobile ? windowVirtualizer : containerVirtualizer;
+  const rowVirtualizer = containerVirtualizer;
 
   React.useEffect(() => {
     const columnFiltersWithNullable = filterFields.map((field) => {
@@ -354,11 +323,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
       >
         <div
           className={cn(
-            "h-full w-full flex-col sm:sticky sm:top-0 sm:max-h-screen sm:min-h-screen sm:min-w-52 sm:max-w-52 sm:self-start md:min-w-72 md:max-w-72",
-            // CSS responsive defaults: hidden on mobile, visible on desktop
-            "hidden group-data-[expanded=true]/controls:flex sm:flex",
-            // Mobile: fixed overlay that takes full screen
-            "fixed inset-0 z-40 bg-background overflow-y-auto scrollbar-hide sm:static sm:z-auto sm:overflow-y-visible",
+            "hidden sm:flex h-full w-full flex-col sm:sticky sm:top-0 sm:max-h-screen sm:min-h-screen sm:min-w-52 sm:max-w-52 sm:self-start md:min-w-72 md:max-w-72"
           )}
         >
           <div className="border-b border-border bg-background p-2 md:sticky md:top-0">
@@ -376,9 +341,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
         </div>
         <div
           className={cn(
-            "flex max-w-full flex-1 flex-col border-border sm:border-l",
-            // Chrome issue
-            "group-data-[expanded=true]/controls:sm:max-w-[calc(100vw_-_208px)] group-data-[expanded=true]/controls:md:max-w-[calc(100vw_-_288px)]",
+            "flex max-w-full flex-1 flex-col border-border sm:border-l"
           )}
         >
           <div
@@ -392,13 +355,13 @@ export function DataTableInfinite<TData, TValue, TMeta>({
           <div className="z-0">
             <Table
               ref={tableRef}
-              onScroll={isMobile ? undefined : onScroll}
+              onScroll={onScroll}
               containerRef={containerRef}
-              containerOverflowVisible={isMobile}
+              containerOverflowVisible={false}
               // REMINDER: https://stackoverflow.com/questions/50361698/border-style-do-not-work-with-sticky-position-element
               className="border-separate border-spacing-0 w-auto min-w-full"
               containerClassName={cn(
-                isMobile ? "" : "h-full max-h-[calc(100vh_-_var(--top-bar-height))] overscroll-none scrollbar-hide"
+                "h-full max-h-[calc(100vh_-_var(--top-bar-height))] overscroll-none scrollbar-hide"
               )}
             >
               <TableHeader className={cn("sticky top-0 z-20 bg-background")}>
@@ -455,6 +418,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
               <TableBody
                 id="content"
                 tabIndex={-1}
+                ref={focusTargetRef}
                 className="outline-1 -outline-offset-1 outline-primary transition-colors focus-visible:outline"
                 // REMINDER: avoids scroll (skipping the table header) when using skip to content
                 style={{
@@ -553,7 +517,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
         />
       </DataTableSheetDetails>
       <CheckedActionsIsland />
-      <FloatingControlsButton />
     </DataTableProvider>
   );
 }

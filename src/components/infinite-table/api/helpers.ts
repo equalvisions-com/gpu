@@ -160,9 +160,8 @@ export function sortData(data: ColumnSchema[], sort: SearchParamsType["sort"]) {
         return Number.isFinite(parsed) ? parsed : undefined;
       }
       default: {
-        // Fallback to raw field
-        // @ts-ignore
-        return row?.[id];
+        // Fallback to raw field with typed access
+        return (row as Record<string, unknown>)[id as string];
       }
     }
   };

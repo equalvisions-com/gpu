@@ -8,7 +8,6 @@ import type {
   Table,
 } from "@tanstack/react-table";
 import { createContext, useContext, useMemo } from "react";
-import { ControlsProvider } from "../../providers/controls";
 
 // REMINDER: read about how to move controlled state out of the useReactTable hook
 // https://github.com/TanStack/table/discussions/4005#discussioncomment-7303569
