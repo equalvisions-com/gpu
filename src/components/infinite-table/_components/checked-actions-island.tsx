@@ -128,10 +128,13 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
     const { toAdd, toRemove } = favoriteStatus;
 
     // Store original state for potential rollback
-    const originalFavorites = [...(queryClient.getQueryData(["favorites"]) as FavoriteKey[] | [] || favorites)];
+    const snapshot = (queryClient.getQueryData(["favorites"]) as FavoriteKey[] | undefined)
+      ?? (Array.isArray(favorites) ? (favorites as FavoriteKey[]) : undefined)
+      ?? (initialFavoriteKeys || []);
+    const originalFavorites = [...snapshot];
 
     // Immediately update UI with optimistic state (no loading state)
-    const current = (favorites as FavoriteKey[]);
+    const current = (localFavorites ?? (Array.isArray(favorites) ? (favorites as FavoriteKey[]) : []) ?? []);
     // Cancel any in-flight fetch to prevent overwriting optimistic state
     try { await queryClient.cancelQueries({ queryKey: ["favorites"] }); } catch {}
 
