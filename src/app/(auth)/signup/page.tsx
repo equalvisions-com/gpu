@@ -23,7 +23,10 @@ export default function SignUpPage() {
       }
     );
     setPending(false);
-    if (!error) router.push("/");
+    if (!error) {
+      router.refresh();
+      router.push("/");
+    }
   };
 
   return (

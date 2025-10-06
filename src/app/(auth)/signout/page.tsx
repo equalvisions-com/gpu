@@ -13,12 +13,18 @@ export default function SignOutPage() {
       .signOut({
         fetchOptions: {
           onSuccess: () => {
-            if (!cancelled) router.replace("/signin");
+            if (!cancelled) {
+              router.refresh();
+              router.replace("/signin");
+            }
           },
         },
       })
       .catch(() => {
-        if (!cancelled) router.replace("/signin");
+        if (!cancelled) {
+          router.refresh();
+          router.replace("/signin");
+        }
       });
     return () => {
       cancelled = true;

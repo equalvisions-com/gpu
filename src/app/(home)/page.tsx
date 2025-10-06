@@ -1,8 +1,10 @@
 import * as React from "react";
+import { Suspense } from "react";
 import { searchParamsCache } from "@/components/infinite-table/search-params";
 import { getQueryClient } from "@/providers/get-query-client";
 import { dataOptions } from "@/components/infinite-table/query-options";
 import { Client } from "@/components/infinite-table/client";
+import AuthShell from "./AuthShell";
 
 export default async function Home({
   searchParams,
@@ -13,6 +15,14 @@ export default async function Home({
   const queryClient = getQueryClient();
   await queryClient.prefetchInfiniteQuery(dataOptions(search));
 
-  return <Client />;
+  return (
+    <Client
+      sidebar={
+        <Suspense fallback={null}>
+          <AuthShell />
+        </Suspense>
+      }
+    />
+  );
 }
 

@@ -22,7 +22,10 @@ export default function SignInPage() {
       }
     );
     setPending(false);
-    if (!error) router.push("/");
+    if (!error) {
+      router.refresh();
+      router.push("/");
+    }
   };
 
   return (

@@ -4,7 +4,8 @@ import * as React from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { LayoutDashboard, Server, BookOpen, HelpCircle, Settings as SettingsIcon } from "lucide-react";
+import { LayoutDashboard, Server, BookOpen, HelpCircle, Settings as SettingsIcon, LogIn, User as UserIcon } from "lucide-react";
+import { useIsAuthenticated } from "@/components/session-provider";
 import type { LucideIcon } from "lucide-react";
 
 interface SidebarLinkProps {
@@ -28,6 +29,7 @@ function SidebarLink({ href, label, icon: Icon }: SidebarLinkProps) {
 }
 
 export function SidebarNav() {
+  const isAuthenticated = useIsAuthenticated();
   return (
     <nav className="space-y-3">
       <div className="space-y-1">
@@ -65,6 +67,19 @@ export function SidebarNav() {
         <div className="space-y-1">
           <SidebarLink href="/docs" label="Documentation" icon={BookOpen} />
           <SidebarLink href="/help" label="Support" icon={HelpCircle} />
+        </div>
+      </div>
+
+      <div className="space-y-1">
+        <div className="mb-1 px-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          User
+        </div>
+        <div className="space-y-1">
+          {isAuthenticated ? (
+            <SidebarLink href="/account" label="Account" icon={UserIcon} />
+          ) : (
+            <SidebarLink href="/signin" label="Sign in" icon={LogIn} />
+          )}
         </div>
       </div>
 

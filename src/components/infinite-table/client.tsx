@@ -13,7 +13,7 @@ import type { FacetMetadataSchema } from "./schema";
 import { searchParamsParser } from "./search-params";
 import type { RowWithId } from "@/types/api";
 
-export function Client() {
+export function Client({ sidebar }: { sidebar?: React.ReactNode }) {
   const contentRef = React.useRef<HTMLTableSectionElement>(null);
   const [search] = useQueryStates(searchParamsParser);
   const {
@@ -109,6 +109,7 @@ export function Client() {
       renderSheetTitle={(props) => props.row?.original.uuid}
       searchParamsParser={searchParamsParser}
       focusTargetRef={contentRef}
+      sidebar={sidebar}
     />
   );
 }
