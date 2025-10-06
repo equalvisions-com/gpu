@@ -46,6 +46,14 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
     refetchOnWindowFocus: false,
   });
 
+  // Local optimistic snapshot to ensure instant UI even if a fetch is in flight
+  const [localFavorites, setLocalFavorites] = React.useState<FavoriteKey[] | undefined>(initialFavoriteKeys);
+  React.useEffect(() => {
+    if (Array.isArray(favorites)) {
+      setLocalFavorites(favorites as FavoriteKey[]);
+    }
+  }, [favorites]);
+
   // Cross-tab sync: listen for favorites updates and trigger a one-time refetch on selection
   React.useEffect(() => {
     const bc = new BroadcastChannel("favorites");
@@ -65,11 +73,11 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
   }, [hasSelection, remoteUpdated, refetch]);
 
   const favoriteKeys = React.useMemo(() => {
-    const list = (favorites && (favorites as FavoriteKey[]).length > 0)
-      ? (favorites as FavoriteKey[])
+    const list = (localFavorites && localFavorites.length > 0)
+      ? localFavorites
       : (initialFavoriteKeys || []);
     return new Set(list);
-  }, [favorites, initialFavoriteKeys]);
+  }, [localFavorites, initialFavoriteKeys]);
 
   // hasSelection computed above
 
@@ -133,6 +141,7 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
     ];
 
     queryClient.setQueryData(["favorites"], optimisticFavorites);
+    setLocalFavorites(optimisticFavorites);
 
     // Perform API calls in background (don't await to keep UI responsive)
     Promise.all([
@@ -154,6 +163,7 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
       // If unauthorized, rollback and redirect to sign-in immediately
       if (responses.some((r) => r.status === 401)) {
         queryClient.setQueryData(["favorites"], originalFavorites);
+        setLocalFavorites(originalFavorites);
         router.push("/signin");
         setIsMutating(false);
         return;
@@ -193,6 +203,7 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
 
       // Rollback optimistic update on error
       queryClient.setQueryData(["favorites"], originalFavorites);
+      setLocalFavorites(originalFavorites);
       const message = error instanceof Error ? error.message : 'Failed to update favorites';
       if (/rate limit/i.test(message) || /429/.test(message)) {
         toast('Rate Limit Exceeded', { description: 'Please slow down. Try again later' });
