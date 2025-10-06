@@ -30,7 +30,7 @@ export function Client({ initialFavoritesData, initialFavoriteKeys }: ClientProp
   const isFavoritesMode = !!initialFavoritesData;
 
   // Fetch user's favorites for real-time updates in favorites mode
-  const { data: favorites = [], isError: isFavoritesError, error: favoritesError } = useQuery({
+  const { data: favorites = [], isError: isFavoritesError, error: favoritesError, refetch: refetchFavorites } = useQuery({
     queryKey: ["favorites"],
     queryFn: async () => {
       const response = await fetch("/api/favorites");
@@ -50,6 +50,16 @@ export function Client({ initialFavoritesData, initialFavoriteKeys }: ClientProp
     refetchOnMount: false,
     refetchOnWindowFocus: false,
   });
+
+  // Cross-tab live updates in favorites view: listen and refetch keys on broadcast
+  React.useEffect(() => {
+    if (!isFavoritesMode) return;
+    const bc = new BroadcastChannel("favorites");
+    bc.onmessage = () => {
+      void refetchFavorites();
+    };
+    return () => bc.close();
+  }, [isFavoritesMode, refetchFavorites]);
 
   React.useEffect(() => {
     if (isFavoritesError && favoritesError instanceof Error) {

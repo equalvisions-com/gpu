@@ -110,16 +110,23 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
     };
   }, [checkedRows, favoriteKeys, table]);
 
+  const [isMutating, setIsMutating] = React.useState(false);
+
   const handleFavorite = async () => {
     if (!hasSelection) return;
+    if (isMutating) return;
+    setIsMutating(true);
 
     const { toAdd, toRemove } = favoriteStatus;
 
     // Store original state for potential rollback
-    const originalFavorites = [...favorites];
+    const originalFavorites = [...(queryClient.getQueryData(["favorites"]) as FavoriteKey[] | [] || favorites)];
 
     // Immediately update UI with optimistic state (no loading state)
     const current = (favorites as FavoriteKey[]);
+    // Cancel any in-flight fetch to prevent overwriting optimistic state
+    try { await queryClient.cancelQueries({ queryKey: ["favorites"] }); } catch {}
+
     const optimisticFavorites = [
       ...current.filter((uuid) => !toRemove.includes(uuid as FavoriteKey)), // Remove items
       ...toAdd // Add items
@@ -148,6 +155,7 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
       if (responses.some((r) => r.status === 401)) {
         queryClient.setQueryData(["favorites"], originalFavorites);
         router.push("/signin");
+        setIsMutating(false);
         return;
       }
       const errors = [];
@@ -171,6 +179,8 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
       // Notify other tabs
       try { bcRef.current?.postMessage({ t: "updated" }); } catch {}
 
+      setIsMutating(false);
+
       if (toAdd.length > 0) {
         toast("Success", { description: toAdd.length === 1 ? "Favorite added" : "Favorites added" });
       }
@@ -189,6 +199,7 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
       } else {
         toast('Favorites error', { description: message });
       }
+      setIsMutating(false);
     });
   };
 
@@ -213,6 +224,7 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
           variant="secondary"
           className="gap-2"
           onClick={handleFavorite}
+          aria-disabled={isMutating}
           aria-label="Toggle favorite status"
         >
           <Star
