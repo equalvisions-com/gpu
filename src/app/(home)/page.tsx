@@ -23,17 +23,7 @@ export default async function Home({
   const isFavoritesMode = params.favorites === 'true';
 
   if (isFavoritesMode) {
-    // Check authentication for favorites
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!session) {
-      // Redirect to signin if not authenticated
-      return <div>Please sign in to view favorites</div>;
-    }
-
-    // Get all pricing data
+    // Start snapshots fetch immediately; fetch session in parallel
     const getSnapshotsCached = unstable_cache(
       async () => {
         return await pricingCache.getAllPricingSnapshots();
@@ -41,8 +31,19 @@ export default async function Home({
       ["pricing:snapshots"],
       { revalidate: 900, tags: ["pricing"] }
     );
+    const snapshotsPromise = getSnapshotsCached();
 
-    const pricingSnapshots = await getSnapshotsCached();
+    const hdrsForFav = await headers();
+    const sessionPromise = auth.api.getSession({ headers: hdrsForFav });
+    const [session, pricingSnapshots] = await Promise.all([
+      sessionPromise,
+      snapshotsPromise,
+    ]);
+
+    if (!session) {
+      // Redirect to signin if not authenticated
+      return <div>Please sign in to view favorites</div>;
+    }
 
     // Flatten all pricing data, only GPU class rows
     const allGpuData: ColumnSchema[] = pricingSnapshots.flatMap((snapshot: any) =>
@@ -89,10 +90,12 @@ export default async function Home({
   // Normal mode - show all data
   const search = searchParamsCache.parse(params);
   const queryClient = getQueryClient();
-  await queryClient.prefetchInfiniteQuery(dataOptions(search));
+  const prefetchPromise = queryClient.prefetchInfiniteQuery(dataOptions(search));
 
   // Prehydrate favorites keys for authed users to avoid flicker on first selection
-  const session = await auth.api.getSession({ headers: await headers() });
+  const hdrs = await headers();
+  const sessionPromise = auth.api.getSession({ headers: hdrs });
+  const [, session] = await Promise.all([prefetchPromise, sessionPromise]);
   let initialFavoriteKeys: string[] | undefined;
   if (session) {
     const getUserFavoriteKeysCached = unstable_cache(

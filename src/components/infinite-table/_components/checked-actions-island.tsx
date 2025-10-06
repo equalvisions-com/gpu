@@ -18,6 +18,8 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
   const { checkedRows, table } = useDataTable<ColumnSchema, unknown>();
   const queryClient = useQueryClient();
   const router = useRouter();
+  const bcRef = React.useRef<BroadcastChannel | null>(null);
+  const [remoteUpdated, setRemoteUpdated] = React.useState(false);
 
   // Only show and fetch favorites when the user actually selects rows
   const hasSelection = React.useMemo(() => {
@@ -26,7 +28,7 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
   }, [checkedRows]);
 
   // Fetch user's favorites only when needed (when user selects rows)
-  const { data: favorites = [] } = useQuery({
+  const { data: favorites = [], refetch } = useQuery({
     queryKey: ["favorites"],
     queryFn: async () => {
       const response = await fetch("/api/favorites");
@@ -36,12 +38,31 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
       const data = await response.json();
       return data.favorites || [];
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    enabled: hasSelection,
+    staleTime: Infinity,
+    // Avoid first network hit if SSR provided keys; revalidation happens on writes
+    enabled: hasSelection && !(initialFavoriteKeys && initialFavoriteKeys.length),
     initialData: initialFavoriteKeys,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
   });
+
+  // Cross-tab sync: listen for favorites updates and trigger a one-time refetch on selection
+  React.useEffect(() => {
+    const bc = new BroadcastChannel("favorites");
+    bcRef.current = bc;
+    bc.onmessage = () => setRemoteUpdated(true);
+    return () => {
+      bc.close();
+      bcRef.current = null;
+    };
+  }, []);
+
+  React.useEffect(() => {
+    if (hasSelection && remoteUpdated) {
+      void refetch();
+      setRemoteUpdated(false);
+    }
+  }, [hasSelection, remoteUpdated, refetch]);
 
   const favoriteKeys = React.useMemo(() => {
     const list = (favorites && (favorites as FavoriteKey[]).length > 0)
@@ -147,6 +168,8 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
 
       // Success - invalidate to get fresh data
       queryClient.invalidateQueries({ queryKey: ["favorites"] });
+      // Notify other tabs
+      try { bcRef.current?.postMessage({ t: "updated" }); } catch {}
 
       if (toAdd.length > 0) {
         toast("Success", { description: toAdd.length === 1 ? "Favorite added" : "Favorites added" });
