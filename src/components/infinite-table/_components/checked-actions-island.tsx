@@ -27,7 +27,7 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
     return false;
   }, [checkedRows]);
 
-  // Fetch user's favorites only when needed (when user selects rows)
+  // Fetch user's favorites when needed (cache-first with fallback for uncached users)
   const { data: favorites = [], refetch } = useQuery({
     queryKey: ["favorites"],
     queryFn: async () => {
@@ -39,18 +39,32 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
       return data.favorites || [];
     },
     staleTime: Infinity,
-    // Avoid first network hit if SSR provided keys; revalidation happens on writes
-    enabled: hasSelection && !(initialFavoriteKeys && initialFavoriteKeys.length),
+    // Enable when: no initial cache exists + user selects rows, OR cross-tab updates happen
+    enabled: (!initialFavoriteKeys && hasSelection) || remoteUpdated,
     initialData: initialFavoriteKeys,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
   });
 
+  // Ensure query cache is initialized with SSR data for optimistic updates to work
+  React.useEffect(() => {
+    if (initialFavoriteKeys) {
+      queryClient.setQueryData(["favorites"], initialFavoriteKeys);
+    }
+  }, [initialFavoriteKeys, queryClient]);
+
   // Local optimistic snapshot to ensure instant UI even if a fetch is in flight
   const [localFavorites, setLocalFavorites] = React.useState<FavoriteKey[] | undefined>(initialFavoriteKeys);
+  const prevFavoritesRef = React.useRef<string>('');
   React.useEffect(() => {
     if (Array.isArray(favorites)) {
-      setLocalFavorites(favorites as FavoriteKey[]);
+      const favoritesArray = favorites as FavoriteKey[];
+      const favoritesString = JSON.stringify(favoritesArray);
+      // Only update if the arrays are actually different to prevent infinite loops
+      if (prevFavoritesRef.current !== favoritesString) {
+        setLocalFavorites(favoritesArray);
+        prevFavoritesRef.current = favoritesString;
+      }
     }
   }, [favorites]);
 
@@ -66,11 +80,11 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
   }, []);
 
   React.useEffect(() => {
-    if (hasSelection && remoteUpdated) {
+    if (remoteUpdated) {
       void refetch();
       setRemoteUpdated(false);
     }
-  }, [hasSelection, remoteUpdated, refetch]);
+  }, [remoteUpdated, refetch]);
 
   const favoriteKeys = React.useMemo(() => {
     const list = (localFavorites && localFavorites.length > 0)

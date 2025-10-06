@@ -25,10 +25,6 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     // Fallback to untyped select due to Drizzle typing conflicts in this build
     // Replace with typed select({ gpuUuid }) when upstream types are compatible
     // @ts-ignore - Drizzle type issues
@@ -57,10 +53,6 @@ export async function POST(request: NextRequest) {
         { error: "Too many requests" },
         { status: 429, headers: buildRateHeaders(rate.limit, rate.remaining, rate.reset) }
       );
-    }
-
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const BodySchema = z.object({ gpuUuids: z.array(z.string().min(1).max(256)).min(1).max(100) });
@@ -105,10 +97,6 @@ export async function DELETE(request: NextRequest) {
         { error: "Too many requests" },
         { status: 429, headers: buildRateHeaders(rate.limit, rate.remaining, rate.reset) }
       );
-    }
-
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const BodySchema = z.object({ gpuUuids: z.array(z.string().min(1).max(256)).min(1).max(100) });
