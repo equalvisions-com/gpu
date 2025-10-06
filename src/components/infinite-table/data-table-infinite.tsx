@@ -83,7 +83,6 @@ export interface DataTableInfiniteProps<TData, TValue, TMeta> {
   searchParamsParser: Record<string, ParserBuilder<any>>;
   // Optional ref target to programmatically focus the table body
   focusTargetRef?: React.Ref<HTMLTableSectionElement>;
-  sidebar?: React.ReactNode;
 }
 
 export function DataTableInfinite<TData, TValue, TMeta>({
@@ -112,7 +111,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   renderSheetTitle,
   searchParamsParser,
   focusTargetRef,
-  sidebar,
 }: DataTableInfiniteProps<TData, TValue, TMeta>) {
   const [columnFilters, setColumnFilters] =
     React.useState<ColumnFiltersState>(defaultColumnFilters);
@@ -337,7 +335,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
             <DataTableFilterCommand searchParamsParser={searchParamsParser} />
           </div>
           <div className="flex-1 p-[12px] sm:overflow-y-scroll scrollbar-hide">
-            {typeof sidebar !== "undefined" ? sidebar : <SidebarNav />}
+            <SidebarNav />
           </div>
           <div className="border-t border-border bg-background p-4 md:sticky md:bottom-0">
             <SocialsFooter />
@@ -520,7 +518,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
           }}
         />
       </DataTableSheetDetails>
-      <CheckedActionsIsland />
+      <CheckedActionsIsland initialFavoriteKeys={(meta as any)?.initialFavoriteKeys} />
     </DataTableProvider>
   );
 }

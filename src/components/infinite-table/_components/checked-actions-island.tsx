@@ -1,21 +1,56 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
 import { useDataTable } from "@/components/data-table/data-table-provider";
 import { Button } from "@/components/ui/button";
 import { Star, GitCompare, Rocket } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import { toast } from "sonner";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColumnSchema } from "@/components/infinite-table/schema";
+import type { FavoriteKey } from "@/types/favorites";
+import { stableGpuKey } from "@/components/infinite-table/stable-key";
 
-export function CheckedActionsIsland() {
-  const { checkedRows } = useDataTable<ColumnSchema, unknown>();
+export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteKeys?: FavoriteKey[] }) {
+  const { checkedRows, table } = useDataTable<ColumnSchema, unknown>();
+  const queryClient = useQueryClient();
+  const router = useRouter();
 
+  // Only show and fetch favorites when the user actually selects rows
   const hasSelection = React.useMemo(() => {
     for (const _ in checkedRows) return true;
     return false;
   }, [checkedRows]);
+
+  // Fetch user's favorites only when needed (when user selects rows)
+  const { data: favorites = [] } = useQuery({
+    queryKey: ["favorites"],
+    queryFn: async () => {
+      const response = await fetch("/api/favorites");
+      if (!response.ok) {
+        throw new Error("Failed to fetch favorites");
+      }
+      const data = await response.json();
+      return data.favorites || [];
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    enabled: hasSelection,
+    initialData: initialFavoriteKeys,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+  });
+
+  const favoriteKeys = React.useMemo(() => {
+    const list = (favorites && (favorites as FavoriteKey[]).length > 0)
+      ? (favorites as FavoriteKey[])
+      : (initialFavoriteKeys || []);
+    return new Set(list);
+  }, [favorites, initialFavoriteKeys]);
+
+  // hasSelection computed above
 
   const canCompare = React.useMemo(() => {
     let count = 0;
@@ -25,6 +60,114 @@ export function CheckedActionsIsland() {
     }
     return false;
   }, [checkedRows]);
+
+  // Determine favorite status of selected items
+  const favoriteStatus = React.useMemo(() => {
+    const selectedRowIds = Object.keys(checkedRows);
+    const rowById = new Map(table.getRowModel().flatRows.map(r => [r.id, r.original as ColumnSchema]));
+    const selectedKeys = selectedRowIds
+      .map(id => rowById.get(id))
+      .filter(Boolean)
+      .map(row => stableGpuKey(row as ColumnSchema));
+
+    const alreadyFavorited = selectedKeys.filter(key => favoriteKeys.has(key));
+    const notFavorited = selectedKeys.filter(key => !favoriteKeys.has(key));
+
+    // Only remove if ALL selected items are already favorited
+    // Otherwise, only add the unfavorited ones
+    const shouldRemove = alreadyFavorited.length === selectedKeys.length && selectedKeys.length > 0;
+    const shouldAdd = notFavorited.length > 0;
+
+    return {
+      selectedCount: selectedKeys.length,
+      alreadyFavorited: alreadyFavorited.length,
+      notFavorited: notFavorited.length,
+      toAdd: shouldAdd ? notFavorited : [],
+      toRemove: shouldRemove ? alreadyFavorited : [],
+      shouldRemove,
+      shouldAdd,
+    };
+  }, [checkedRows, favoriteKeys, table]);
+
+  const handleFavorite = async () => {
+    if (!hasSelection) return;
+
+    const { toAdd, toRemove } = favoriteStatus;
+
+    // Store original state for potential rollback
+    const originalFavorites = [...favorites];
+
+    // Immediately update UI with optimistic state (no loading state)
+    const current = (favorites as FavoriteKey[]);
+    const optimisticFavorites = [
+      ...current.filter((uuid) => !toRemove.includes(uuid as FavoriteKey)), // Remove items
+      ...toAdd // Add items
+    ];
+
+    queryClient.setQueryData(["favorites"], optimisticFavorites);
+
+    // Perform API calls in background (don't await to keep UI responsive)
+    Promise.all([
+      // Add new favorites
+      ...(toAdd.length > 0 ? [fetch('/api/favorites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ gpuUuids: toAdd }),
+      })] : []),
+
+      // Remove existing favorites
+      ...(toRemove.length > 0 ? [fetch('/api/favorites', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ gpuUuids: toRemove }),
+      })] : []),
+    ])
+    .then(async (responses) => {
+      // If unauthorized, rollback and redirect to sign-in immediately
+      if (responses.some((r) => r.status === 401)) {
+        queryClient.setQueryData(["favorites"], originalFavorites);
+        router.push("/signin");
+        return;
+      }
+      const errors = [];
+      for (const response of responses) {
+        if (!response.ok) {
+          if (response.status === 429) {
+            errors.push('Rate limit exceeded, try again shortly');
+          } else {
+            const error = await response.json().catch(() => null);
+            errors.push((error && error.error) || 'API call failed');
+          }
+        }
+      }
+
+      if (errors.length > 0) {
+        throw new Error(errors.join(', '));
+      }
+
+      // Success - invalidate to get fresh data
+      queryClient.invalidateQueries({ queryKey: ["favorites"] });
+
+      if (toAdd.length > 0) {
+        toast("Success", { description: toAdd.length === 1 ? "Favorite added" : "Favorites added" });
+      }
+      if (toRemove.length > 0) {
+        toast("Success", { description: toRemove.length === 1 ? "Favorite removed" : "Favorites removed" });
+      }
+    })
+    .catch((error) => {
+      console.error('Error updating favorites:', error);
+
+      // Rollback optimistic update on error
+      queryClient.setQueryData(["favorites"], originalFavorites);
+      const message = error instanceof Error ? error.message : 'Failed to update favorites';
+      if (/rate limit/i.test(message) || /429/.test(message)) {
+        toast('Rate Limit Exceeded', { description: 'Please slow down. Try again later' });
+      } else {
+        toast('Favorites error', { description: message });
+      }
+    });
+  };
 
   if (!hasSelection) return null;
 
@@ -42,9 +185,26 @@ export function CheckedActionsIsland() {
           "supports-[backdrop-filter]:bg-background/60",
         )}
       >
-        <Button size="sm" variant="secondary" className="gap-2 disabled:opacity-100 disabled:text-muted-foreground" aria-label="Favorite selected">
-          <Star className="h-4 w-4" />
-          <span>Favorite</span>
+        <Button
+          size="sm"
+          variant="secondary"
+          className="gap-2"
+          onClick={handleFavorite}
+          aria-label="Toggle favorite status"
+        >
+          <Star
+            className={`h-4 w-4 ${
+              favoriteStatus.shouldRemove
+                ? 'fill-yellow-400 text-yellow-400'
+                : ''
+            }`}
+          />
+          <span>
+            {favoriteStatus.shouldRemove
+              ? 'Favorited'
+              : 'Favorite'
+            }
+          </span>
         </Button>
         {canCompare ? (
           <Button
@@ -89,5 +249,6 @@ export function CheckedActionsIsland() {
   if (typeof document === "undefined") return content;
   return createPortal(content, document.body);
 }
+
 
 

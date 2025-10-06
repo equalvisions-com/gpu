@@ -22,6 +22,20 @@
       "when": 1759708359367,
       "tag": "0002_real_cargill",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1759767420096,
+      "tag": "0003_petite_echo",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1759767589029,
+      "tag": "0004_chief_captain_marvel",
+      "breakpoints": true
     }
   ]
 }

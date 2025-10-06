@@ -1,10 +1,8 @@
 import * as React from "react";
-import { Suspense } from "react";
 import { searchParamsCache } from "./search-params";
 import { getQueryClient } from "@/providers/get-query-client";
 import { dataOptions } from "./query-options";
 import { Client } from "./client";
-import AuthShell from "@/app/(home)/AuthShell";
 
 export default async function Page({
   searchParams,
@@ -15,13 +13,5 @@ export default async function Page({
   const queryClient = getQueryClient();
   await queryClient.prefetchInfiniteQuery(dataOptions(search));
 
-  return (
-    <Client
-      sidebar={
-        <Suspense fallback={null}>
-          <AuthShell />
-        </Suspense>
-      }
-    />
-  );
+  return <Client />;
 }
