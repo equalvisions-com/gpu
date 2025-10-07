@@ -43,8 +43,8 @@ export function Client({ initialFavoritesData, initialFavoriteKeys }: ClientProp
       return (data.favorites || []) as FavoriteKey[];
     },
     staleTime: Infinity,
-    // Skip the network in favorites mode if SSR provided keys; actions island will update cache on change
-    enabled: isFavoritesMode && !(initialFavoriteKeys && initialFavoriteKeys.length),
+    // Always enable in favorites mode to receive optimistic cache updates from actions island
+    enabled: isFavoritesMode,
     retry: false,
     initialData: isFavoritesMode ? (initialFavoriteKeys || []) : undefined,
     refetchOnMount: false,

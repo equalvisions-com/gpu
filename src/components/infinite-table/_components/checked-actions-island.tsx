@@ -20,6 +20,14 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
   const router = useRouter();
   const bcRef = React.useRef<BroadcastChannel | null>(null);
   const [remoteUpdated, setRemoteUpdated] = React.useState(false);
+  const isMountedRef = React.useRef(true);
+
+  // Cleanup on unmount to prevent state updates after component unmounts
+  React.useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   // Only show and fetch favorites when the user actually selects rows
   const hasSelection = React.useMemo(() => {
@@ -72,7 +80,11 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
   React.useEffect(() => {
     const bc = new BroadcastChannel("favorites");
     bcRef.current = bc;
-    bc.onmessage = () => setRemoteUpdated(true);
+    bc.onmessage = () => {
+      if (isMountedRef.current) {
+        setRemoteUpdated(true);
+      }
+    };
     return () => {
       bc.close();
       bcRef.current = null;
@@ -82,7 +94,9 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
   React.useEffect(() => {
     if (remoteUpdated) {
       void refetch();
-      setRemoteUpdated(false);
+      if (isMountedRef.current) {
+        setRemoteUpdated(false);
+      }
     }
   }, [remoteUpdated, refetch]);
 
@@ -180,9 +194,11 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
       // If unauthorized, rollback and redirect to sign-in immediately
       if (responses.some((r) => r.status === 401)) {
         queryClient.setQueryData(["favorites"], originalFavorites);
-        setLocalFavorites(originalFavorites);
+        if (isMountedRef.current) {
+          setLocalFavorites(originalFavorites);
+          setIsMutating(false);
+        }
         router.push("/signin");
-        setIsMutating(false);
         return;
       }
       const errors = [];
@@ -206,7 +222,9 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
       // Notify other tabs
       try { bcRef.current?.postMessage({ t: "updated" }); } catch {}
 
-      setIsMutating(false);
+      if (isMountedRef.current) {
+        setIsMutating(false);
+      }
 
       if (toAdd.length > 0) {
         toast("Success", { description: toAdd.length === 1 ? "Favorite added" : "Favorites added" });
@@ -220,14 +238,16 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
 
       // Rollback optimistic update on error
       queryClient.setQueryData(["favorites"], originalFavorites);
-      setLocalFavorites(originalFavorites);
-      const message = error instanceof Error ? error.message : 'Failed to update favorites';
-      if (/rate limit/i.test(message) || /429/.test(message)) {
-        toast('Rate Limit Exceeded', { description: 'Please slow down. Try again later' });
-      } else {
-        toast('Favorites error', { description: message });
+      if (isMountedRef.current) {
+        setLocalFavorites(originalFavorites);
+        setIsMutating(false);
+        const message = error instanceof Error ? error.message : 'Failed to update favorites';
+        if (/rate limit/i.test(message) || /429/.test(message)) {
+          toast('Rate Limit Exceeded', { description: 'Please slow down. Try again later' });
+        } else {
+          toast('Favorites error', { description: message });
+        }
       }
-      setIsMutating(false);
     });
   };
 
