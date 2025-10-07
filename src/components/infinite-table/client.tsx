@@ -14,7 +14,7 @@ import { searchParamsParser } from "./search-params";
 import type { RowWithId } from "@/types/api";
 import type { ColumnSchema } from "./schema";
 import { stableGpuKey } from "./stable-key";
-import { toast } from "sonner";
+// Inline notices handle favorites feedback; no toasts here.
 import type { FavoriteKey } from "@/types/favorites";
 import { 
   FAVORITES_QUERY_KEY, 
@@ -78,19 +78,7 @@ export function Client({ initialFavoritesData, initialFavoriteKeys }: ClientProp
     return () => bc.close();
   }, [isFavoritesMode, queryClient]);
 
-  /**
-   * Display error toasts for favorites query failures
-   * Only shows errors in favorites mode where the query is critical
-   */
-  React.useEffect(() => {
-    if (isFavoritesError && favoritesError instanceof Error) {
-      if (/(rate limit|429)/i.test(favoritesError.message)) {
-        toast('Rate Limit Exceeded', { description: 'Please slow down. Try again later' });
-      } else {
-        toast('Favorites error', { description: favoritesError.message });
-      }
-    }
-  }, [isFavoritesError, favoritesError]);
+  // Removed old Sonner error toasts here (query is disabled in this component)
 
   /**
    * Convert favorites array to Set for O(1) lookup performance

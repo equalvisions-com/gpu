@@ -7,8 +7,11 @@ import { useDataTable } from "@/components/data-table/data-table-provider";
 import { Button } from "@/components/ui/button";
 import { Star, GitCompare, Rocket } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { logger } from "@/lib/logger";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
-import { toast } from "sonner";
+// No Sonner toasts for favorites flows; use inline notice instead
+import { useEphemeralNotice } from "@/hooks/use-ephemeral-notice";
+import { FavoritesNotice } from "./favorites-notice";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColumnSchema } from "@/components/infinite-table/schema";
 import type { FavoriteKey } from "@/types/favorites";
@@ -30,8 +33,10 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
   const router = useRouter();
   const bcRef = React.useRef<BroadcastChannel | null>(null);
   const isMountedRef = React.useRef(true);
+  const { message: favoritesNotice, isOpen: isFavoritesOpen, show: showFavoritesNotice } = useEphemeralNotice(1600);
+  const [noticeVariant, setNoticeVariant] = React.useState<"success" | "error">("success");
 
-  // Cleanup on unmount to prevent state updates after component unmounts
+  // Cleanup flag (other timers are handled in the hook)
   React.useEffect(() => {
     return () => {
       isMountedRef.current = false;
@@ -210,15 +215,15 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
         setIsMutating(false);
       }
 
-      // Show success toast
+      // Inline success notice rendered within the island (shares centering context)
+      setNoticeVariant("success");
       if (toAdd.length > 0) {
-        toast("Success", { description: toAdd.length === 1 ? "Favorite added" : "Favorites added" });
-      }
-      if (toRemove.length > 0) {
-        toast("Success", { description: toRemove.length === 1 ? "Favorite removed" : "Favorites removed" });
+        showFavoritesNotice("Successfully added to favorites");
+      } else if (toRemove.length > 0) {
+        showFavoritesNotice("Successfully removed from favorites");
       }
     } catch (error) {
-      console.error('[handleFavorite] Mutation failed', {
+      logger.warn('[handleFavorite] Mutation failed', {
         toAddCount: toAdd.length,
         toRemoveCount: toRemove.length,
         error: error instanceof Error ? error.message : String(error),
@@ -231,7 +236,7 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
       if (isMountedRef.current) {
         setIsMutating(false);
         
-        // Handle specific error types
+        // Handle specific error types with lightweight inline-styled toasts (no global favorites styling)
         if (error instanceof FavoritesAPIError) {
           if (error.status === 401) {
             router.push("/signin");
@@ -239,18 +244,22 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
           }
           
           if (error.code === "RATE_LIMIT") {
-            toast('Rate Limit Exceeded', { description: 'Please slow down. Try again later' });
+            setNoticeVariant("error");
+            showFavoritesNotice('Rate limit exceeded. Try again later');
             return;
           }
           
           if (error.code === "TIMEOUT") {
-            toast('Request Timeout', { description: 'Server took too long. Please try again.' });
+            setNoticeVariant("error");
+            showFavoritesNotice('Server took too long. Please try again.');
             return;
           }
           
-          toast('Favorites Error', { description: error.message });
+          setNoticeVariant("error");
+          showFavoritesNotice(error.message);
         } else {
-          toast('Favorites Error', { description: 'Failed to update favorites' });
+          setNoticeVariant("error");
+          showFavoritesNotice('Failed to update favorites');
         }
       }
     }
@@ -266,6 +275,7 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
       role="region"
       aria-label="Selection actions"
     >
+      <FavoritesNotice message={favoritesNotice} open={isFavoritesOpen} variant={noticeVariant} />
       <div
         className={cn(
           "z-[var(--z-island)] flex w-auto items-center gap-2 rounded-xl border border-border bg-background/95 p-2 shadow-lg backdrop-blur transition-all duration-200 motion-reduce:transition-none",
