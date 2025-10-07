@@ -218,9 +218,9 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
       // Inline success notice rendered within the island (shares centering context)
       setNoticeVariant("success");
       if (toAdd.length > 0) {
-        showFavoritesNotice("Successfully added to favorites");
+        showFavoritesNotice("Added to favorites");
       } else if (toRemove.length > 0) {
-        showFavoritesNotice("Successfully removed from favorites");
+        showFavoritesNotice("Removed from favorites");
       }
     } catch (error) {
       logger.warn('[handleFavorite] Mutation failed', {

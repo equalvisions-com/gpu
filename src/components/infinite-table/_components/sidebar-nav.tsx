@@ -4,8 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { LayoutDashboard, Server, BookOpen, HelpCircle, Settings as SettingsIcon, Star } from "lucide-react";
+import { LayoutDashboard, Server, BookOpen, HelpCircle, Settings as SettingsIcon, Star, Cpu, Bot } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 interface SidebarLinkProps {
@@ -21,7 +20,7 @@ function SidebarLink({ href, label, icon: Icon, onClick }: SidebarLinkProps) {
       <button
         onClick={onClick}
         className={cn(
-          "group flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground w-full text-left",
+          "group flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm font-medium transition-colors text-foreground hover:bg-muted/50 hover:text-accent-foreground w-full text-left",
         )}
       >
         {Icon ? <Icon className="h-4 w-4" aria-hidden /> : null}
@@ -38,7 +37,7 @@ function SidebarLink({ href, label, icon: Icon, onClick }: SidebarLinkProps) {
     <Link
       href={href}
       className={cn(
-        "group flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+        "group flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm font-medium transition-colors text-foreground hover:bg-muted/50 hover:text-accent-foreground",
       )}
     >
       {Icon ? <Icon className="h-4 w-4" aria-hidden /> : null}
@@ -66,50 +65,34 @@ export function SidebarNav() {
   return (
     <nav className="space-y-3">
       <div className="space-y-1">
-        <div className="mb-1 px-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        <div className="mb-1 px-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
           Main
         </div>
-        <Accordion type="single" collapsible defaultValue="overview" className="space-y-0">
-          <AccordionItem value="overview" className="border-b-0">
-            <AccordionTrigger className="px-2 py-2 text-sm hover:no-underline rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground">
-              <div className="flex items-center gap-2">
-                <LayoutDashboard className="h-4 w-4" strokeWidth={1.75} />
-                <span>Overview</span>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="pb-0">
-              <div className="relative mt-1 pl-[25px]">
-                <span aria-hidden className="pointer-events-none absolute left-[15px] top-0 bottom-0 w-px bg-border" />
-                <div className="space-y-1">
-                  <SidebarLink label="GPUs" onClick={handleGPUsClick} />
-                  <SidebarLink href="/cpus" label="CPUs" />
-                </div>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
         <div className="space-y-1">
-          <SidebarLink href="/providers" label="Providers" icon={Server} />
-          <SidebarLink label="Favorites" icon={Star} onClick={handleFavoritesClick} />
+          <SidebarLink label="GPUs" icon={Server} onClick={handleGPUsClick} />
+          <SidebarLink href="/cpus" label="CPUs" icon={Cpu} />
+          <SidebarLink href="/models" label="Models" icon={Bot} />
         </div>
       </div>
 
       <div className="space-y-1">
-        <div className="mb-1 px-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        <div className="mb-1 px-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          Account
+        </div>
+        <div className="space-y-1">
+          <SidebarLink href="/dashboard" label="Dashboard" icon={LayoutDashboard} />
+          <SidebarLink label="Favorites" icon={Star} onClick={handleFavoritesClick} />
+          <SidebarLink href="/settings" label="Settings" icon={SettingsIcon} />
+        </div>
+      </div>
+
+      <div className="space-y-1">
+        <div className="mb-1 px-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
           Resources
         </div>
         <div className="space-y-1">
           <SidebarLink href="/docs" label="Documentation" icon={BookOpen} />
           <SidebarLink href="/help" label="Support" icon={HelpCircle} />
-        </div>
-      </div>
-
-      <div className="space-y-1">
-        <div className="mb-1 px-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Settings
-        </div>
-        <div className="space-y-1">
-          <SidebarLink href="/settings" label="Settings" icon={SettingsIcon} />
         </div>
       </div>
     </nav>
