@@ -66,12 +66,12 @@ export function SidebarNav() {
     <nav className="space-y-3">
       <div className="space-y-1">
         <div className="mb-1 px-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          Main
+          Deploy
         </div>
         <div className="space-y-1">
           <SidebarLink label="GPUs" icon={Server} onClick={handleGPUsClick} />
           <SidebarLink href="/cpus" label="CPUs" icon={Cpu} />
-          <SidebarLink href="/models" label="Models" icon={Bot} />
+          <SidebarLink href="/models" label="LLMs" icon={Bot} />
         </div>
       </div>
 
