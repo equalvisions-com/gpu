@@ -13,13 +13,22 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColumnSchema } from "@/components/infinite-table/schema";
 import type { FavoriteKey } from "@/types/favorites";
 import { stableGpuKey } from "@/components/infinite-table/stable-key";
+import { 
+  FAVORITES_QUERY_KEY, 
+  FAVORITES_BROADCAST_CHANNEL,
+} from "@/lib/favorites/constants";
+import { 
+  getFavorites,
+  addFavorites,
+  removeFavorites,
+  FavoritesAPIError
+} from "@/lib/favorites/api-client";
 
 export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteKeys?: FavoriteKey[] }) {
-  const { checkedRows, table } = useDataTable<ColumnSchema, unknown>();
+  const { checkedRows, table, toggleCheckedRow } = useDataTable<ColumnSchema, unknown>();
   const queryClient = useQueryClient();
   const router = useRouter();
   const bcRef = React.useRef<BroadcastChannel | null>(null);
-  const [remoteUpdated, setRemoteUpdated] = React.useState(false);
   const isMountedRef = React.useRef(true);
 
   // Cleanup on unmount to prevent state updates after component unmounts
@@ -35,29 +44,28 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
     return false;
   }, [checkedRows]);
 
-  // Fetch user's favorites when needed (cache-first with fallback for uncached users)
-  const { data: favorites = [], refetch } = useQuery({
-    queryKey: ["favorites"],
-    queryFn: async () => {
-      const response = await fetch("/api/favorites");
-      if (!response.ok) {
-        throw new Error("Failed to fetch favorites");
-      }
-      const data = await response.json();
-      return data.favorites || [];
-    },
+  /**
+   * Fetch favorites when needed: no SSR cache + user selects row
+   * Uses centralized API client with timeout and error handling
+   */
+  const { data: favorites = [] } = useQuery({
+    queryKey: FAVORITES_QUERY_KEY,
+    queryFn: getFavorites,
     staleTime: Infinity,
-    // Enable when: no initial cache exists + user selects rows, OR cross-tab updates happen
-    enabled: (!initialFavoriteKeys && hasSelection) || remoteUpdated,
-    initialData: initialFavoriteKeys,
+    // Only fetch if no SSR cache AND user has selection (avoids flicker when cache exists)
+    enabled: !initialFavoriteKeys && hasSelection,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
   });
 
-  // Ensure query cache is initialized with SSR data for optimistic updates to work
+  /**
+   * Initialize query cache with SSR data for optimistic updates to work
+   * Only initializes if cache is empty to prevent overwriting optimistic updates
+   */
   React.useEffect(() => {
-    if (initialFavoriteKeys) {
-      queryClient.setQueryData(["favorites"], initialFavoriteKeys);
+    const existingData = queryClient.getQueryData<FavoriteKey[]>(FAVORITES_QUERY_KEY);
+    if (!existingData && initialFavoriteKeys) {
+      queryClient.setQueryData(FAVORITES_QUERY_KEY, initialFavoriteKeys);
     }
   }, [initialFavoriteKeys, queryClient]);
 
@@ -76,29 +84,29 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
     }
   }, [favorites]);
 
-  // Cross-tab sync: listen for favorites updates and trigger a one-time refetch on selection
+  /**
+   * Initialize BroadcastChannel for cross-tab synchronization
+   * Receives favorites data directly from other tabs (no API call)
+   * This optimizes multi-tab scenarios by avoiding redundant server requests
+   */
   React.useEffect(() => {
-    const bc = new BroadcastChannel("favorites");
+    const bc = new BroadcastChannel(FAVORITES_BROADCAST_CHANNEL);
     bcRef.current = bc;
-    bc.onmessage = () => {
-      if (isMountedRef.current) {
-        setRemoteUpdated(true);
+    
+    // Listen for updates from other tabs - receive data directly (no API call)
+    bc.onmessage = (event) => {
+      if (event.data?.type === "updated" && Array.isArray(event.data?.favorites)) {
+        const newFavorites = event.data.favorites as FavoriteKey[];
+        queryClient.setQueryData(FAVORITES_QUERY_KEY, newFavorites);
+        setLocalFavorites(newFavorites);
       }
     };
+    
     return () => {
       bc.close();
       bcRef.current = null;
     };
-  }, []);
-
-  React.useEffect(() => {
-    if (remoteUpdated) {
-      void refetch();
-      if (isMountedRef.current) {
-        setRemoteUpdated(false);
-      }
-    }
-  }, [remoteUpdated, refetch]);
+  }, [queryClient]);
 
   const favoriteKeys = React.useMemo(() => {
     const list = (localFavorites && localFavorites.length > 0)
@@ -148,6 +156,11 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
 
   const [isMutating, setIsMutating] = React.useState(false);
 
+  /**
+   * Handles favorite/unfavorite action for selected rows
+   * Implements optimistic updates with automatic rollback on error
+   * Broadcasts changes to other tabs for real-time sync
+   */
   const handleFavorite = async () => {
     if (!hasSelection) return;
     if (isMutating) return;
@@ -156,99 +169,91 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
     const { toAdd, toRemove } = favoriteStatus;
 
     // Store original state for potential rollback
-    const snapshot = (queryClient.getQueryData(["favorites"]) as FavoriteKey[] | undefined)
+    const snapshot = (queryClient.getQueryData(FAVORITES_QUERY_KEY) as FavoriteKey[] | undefined)
       ?? (Array.isArray(favorites) ? (favorites as FavoriteKey[]) : undefined)
       ?? (initialFavoriteKeys || []);
     const originalFavorites = [...snapshot];
 
     // Immediately update UI with optimistic state (no loading state)
     const current = (localFavorites ?? (Array.isArray(favorites) ? (favorites as FavoriteKey[]) : []) ?? []);
+    
     // Cancel any in-flight fetch to prevent overwriting optimistic state
-    try { await queryClient.cancelQueries({ queryKey: ["favorites"] }); } catch {}
+    try { 
+      await queryClient.cancelQueries({ queryKey: FAVORITES_QUERY_KEY }); 
+    } catch {}
 
     const optimisticFavorites = [
       ...current.filter((uuid) => !toRemove.includes(uuid as FavoriteKey)), // Remove items
       ...toAdd // Add items
     ];
 
-    queryClient.setQueryData(["favorites"], optimisticFavorites);
+    queryClient.setQueryData(FAVORITES_QUERY_KEY, optimisticFavorites);
     setLocalFavorites(optimisticFavorites);
 
-    // Perform API calls in background (don't await to keep UI responsive)
-    Promise.all([
-      // Add new favorites
-      ...(toAdd.length > 0 ? [fetch('/api/favorites', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ gpuUuids: toAdd }),
-      })] : []),
+    // Perform API calls in background using centralized API client with timeout
+    try {
+      // Execute mutations in parallel
+      await Promise.all([
+        toAdd.length > 0 ? addFavorites(toAdd) : Promise.resolve(),
+        toRemove.length > 0 ? removeFavorites(toRemove) : Promise.resolve(),
+      ]);
 
-      // Remove existing favorites
-      ...(toRemove.length > 0 ? [fetch('/api/favorites', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ gpuUuids: toRemove }),
-      })] : []),
-    ])
-    .then(async (responses) => {
-      // If unauthorized, rollback and redirect to sign-in immediately
-      if (responses.some((r) => r.status === 401)) {
-        queryClient.setQueryData(["favorites"], originalFavorites);
-        if (isMountedRef.current) {
-          setLocalFavorites(originalFavorites);
-          setIsMutating(false);
-        }
-        router.push("/signin");
-        return;
-      }
-      const errors = [];
-      for (const response of responses) {
-        if (!response.ok) {
-          if (response.status === 429) {
-            errors.push('Rate limit exceeded, try again shortly');
-          } else {
-            const error = await response.json().catch(() => null);
-            errors.push((error && error.error) || 'API call failed');
-          }
-        }
-      }
-
-      if (errors.length > 0) {
-        throw new Error(errors.join(', '));
-      }
-
-      // Success - invalidate to get fresh data
-      queryClient.invalidateQueries({ queryKey: ["favorites"] });
-      // Notify other tabs
-      try { bcRef.current?.postMessage({ t: "updated" }); } catch {}
+      // Success - notify other tabs with the updated data (no need for them to refetch)
+      try { 
+        bcRef.current?.postMessage({ 
+          type: "updated", 
+          favorites: optimisticFavorites 
+        }); 
+      } catch {}
 
       if (isMountedRef.current) {
         setIsMutating(false);
       }
 
+      // Show success toast
       if (toAdd.length > 0) {
         toast("Success", { description: toAdd.length === 1 ? "Favorite added" : "Favorites added" });
       }
       if (toRemove.length > 0) {
         toast("Success", { description: toRemove.length === 1 ? "Favorite removed" : "Favorites removed" });
       }
-    })
-    .catch((error) => {
-      console.error('Error updating favorites:', error);
+    } catch (error) {
+      console.error('[handleFavorite] Mutation failed', {
+        toAddCount: toAdd.length,
+        toRemoveCount: toRemove.length,
+        error: error instanceof Error ? error.message : String(error),
+      });
 
       // Rollback optimistic update on error
-      queryClient.setQueryData(["favorites"], originalFavorites);
+      queryClient.setQueryData(FAVORITES_QUERY_KEY, originalFavorites);
+      setLocalFavorites(originalFavorites);
+      
       if (isMountedRef.current) {
-        setLocalFavorites(originalFavorites);
         setIsMutating(false);
-        const message = error instanceof Error ? error.message : 'Failed to update favorites';
-        if (/rate limit/i.test(message) || /429/.test(message)) {
-          toast('Rate Limit Exceeded', { description: 'Please slow down. Try again later' });
+        
+        // Handle specific error types
+        if (error instanceof FavoritesAPIError) {
+          if (error.status === 401) {
+            router.push("/signin");
+            return;
+          }
+          
+          if (error.code === "RATE_LIMIT") {
+            toast('Rate Limit Exceeded', { description: 'Please slow down. Try again later' });
+            return;
+          }
+          
+          if (error.code === "TIMEOUT") {
+            toast('Request Timeout', { description: 'Server took too long. Please try again.' });
+            return;
+          }
+          
+          toast('Favorites Error', { description: error.message });
         } else {
-          toast('Favorites error', { description: message });
+          toast('Favorites Error', { description: 'Failed to update favorites' });
         }
       }
-    });
+    }
   };
 
   if (!hasSelection) return null;

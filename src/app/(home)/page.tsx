@@ -10,9 +10,7 @@ import { createHash } from "crypto";
 import { unstable_cache } from "next/cache";
 import type { ColumnSchema } from "@/components/infinite-table/schema";
 import { stableGpuKey } from "@/components/infinite-table/stable-key";
-import { db } from "@/db/client";
-import { userFavorites } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { getUserFavoritesFromCache } from "@/lib/favorites/cache";
 
 export default async function Home({
   searchParams,
@@ -62,23 +60,8 @@ export default async function Home({
         })
     );
 
-    // Read favorite keys via Next.js cache and tag for revalidation after writes
-    const getUserFavoriteKeysCached = unstable_cache(
-      async (userId: string) => {
-        // @ts-ignore - Drizzle typing quirk
-        const rows: Array<{ gpuUuid: string }> = await db
-          // use a simple select().from(table) to avoid drizzle typing conflicts
-          .select()
-          .from(userFavorites as any)
-          // @ts-ignore drizzle SQL type mismatch between build artifacts
-          .where(eq(userFavorites.userId as any, userId as any));
-        return (rows || []).map((r: any) => r.gpuUuid as string);
-      },
-      ["favorites:keys"],
-      { revalidate: 43200, tags: [`favorites:user:${session.user.id}`] }
-    );
-
-    const initialFavoriteKeys: string[] = await getUserFavoriteKeysCached(session.user.id);
+    // Fetch user's favorites with caching
+    const initialFavoriteKeys: string[] = await getUserFavoritesFromCache(session.user.id);
     const favoriteKeys = new Set<string>(initialFavoriteKeys);
 
     // Filter data to only show favorites (compare by stable key, not volatile uuid)
@@ -96,22 +79,10 @@ export default async function Home({
   const hdrs = await headers();
   const sessionPromise = auth.api.getSession({ headers: hdrs });
   const [, session] = await Promise.all([prefetchPromise, sessionPromise]);
+  
   let initialFavoriteKeys: string[] | undefined;
   if (session) {
-    const getUserFavoriteKeysCached = unstable_cache(
-      async (userId: string) => {
-        // @ts-ignore - Drizzle typing quirk
-        const rows: Array<{ gpuUuid: string }> = await db
-          .select()
-          .from(userFavorites as any)
-          // @ts-ignore drizzle SQL type mismatch between build artifacts
-          .where(eq(userFavorites.userId as any, userId as any));
-        return (rows || []).map((r: any) => r.gpuUuid as string);
-      },
-      ["favorites:keys"],
-      { revalidate: 43200, tags: [`favorites:user:${session.user.id}`] }
-    );
-    initialFavoriteKeys = await getUserFavoriteKeysCached(session.user.id);
+    initialFavoriteKeys = await getUserFavoritesFromCache(session.user.id);
   }
 
   return <Client initialFavoriteKeys={initialFavoriteKeys} />;

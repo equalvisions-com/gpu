@@ -1,7 +1,7 @@
 "use client";
 
 import { useHotKey } from "@/hooks/use-hot-key";
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Table as TTable } from "@tanstack/react-table";
 import { useQueryStates } from "nuqs";
 import * as React from "react";
@@ -15,7 +15,12 @@ import type { RowWithId } from "@/types/api";
 import type { ColumnSchema } from "./schema";
 import { stableGpuKey } from "./stable-key";
 import { toast } from "sonner";
-import type { FavoritesResponse, FavoriteKey } from "@/types/favorites";
+import type { FavoriteKey } from "@/types/favorites";
+import { 
+  FAVORITES_QUERY_KEY, 
+  FAVORITES_BROADCAST_CHANNEL,
+} from "@/lib/favorites/constants";
+import { getFavorites } from "@/lib/favorites/api-client";
 
 interface ClientProps {
   initialFavoritesData?: ColumnSchema[];
@@ -25,42 +30,58 @@ interface ClientProps {
 export function Client({ initialFavoritesData, initialFavoriteKeys }: ClientProps = {}) {
   const contentRef = React.useRef<HTMLTableSectionElement>(null);
   const [search] = useQueryStates(searchParamsParser);
+  const queryClient = useQueryClient();
 
   // Use favorites data if provided, otherwise use infinite query
   const isFavoritesMode = !!initialFavoritesData;
 
-  // Fetch user's favorites for real-time updates in favorites mode
-  const { data: favorites = [], isError: isFavoritesError, error: favoritesError, refetch: refetchFavorites } = useQuery({
-    queryKey: ["favorites"],
-    queryFn: async () => {
-      const response = await fetch("/api/favorites");
-      if (response.status === 429) {
-        throw new Error("Rate limit exceeded, try again shortly");
-      }
-      if (!response.ok) throw new Error("Failed to fetch favorites");
-      const data: FavoritesResponse = await response.json();
-      // API returns { favorites: string[] }
-      return (data.favorites || []) as FavoriteKey[];
-    },
+  /**
+   * Initialize query cache with SSR data if available
+   * Only runs once on mount to avoid overwriting optimistic updates
+   */
+  const initializedRef = React.useRef(false);
+  React.useEffect(() => {
+    if (!initializedRef.current && initialFavoriteKeys) {
+      queryClient.setQueryData(FAVORITES_QUERY_KEY, initialFavoriteKeys);
+      initializedRef.current = true;
+    }
+  }, [initialFavoriteKeys, queryClient]);
+
+  /**
+   * Subscribe to cache updates without fetching
+   * In favorites mode, never fetches - only listens to cache changes from optimistic updates
+   * Uses centralized API client with timeout and error handling
+   */
+  const { data: favorites = [], isError: isFavoritesError, error: favoritesError } = useQuery({
+    queryKey: FAVORITES_QUERY_KEY,
+    queryFn: getFavorites,
     staleTime: Infinity,
-    // Always enable in favorites mode to receive optimistic cache updates from actions island
-    enabled: isFavoritesMode,
-    retry: false,
-    initialData: isFavoritesMode ? (initialFavoriteKeys || []) : undefined,
+    enabled: false, // Never auto-fetch in this component (CheckedActionsIsland handles fetching)
     refetchOnMount: false,
     refetchOnWindowFocus: false,
   });
 
-  // Cross-tab live updates in favorites view: listen and refetch keys on broadcast
+  /**
+   * Cross-tab synchronization for favorites view
+   * Receives favorites data directly from other tabs (no API call)
+   * This optimizes multi-tab scenarios by avoiding redundant server requests
+   */
   React.useEffect(() => {
     if (!isFavoritesMode) return;
-    const bc = new BroadcastChannel("favorites");
-    bc.onmessage = () => {
-      void refetchFavorites();
+    const bc = new BroadcastChannel(FAVORITES_BROADCAST_CHANNEL);
+    bc.onmessage = (event) => {
+      if (event.data?.type === "updated" && Array.isArray(event.data?.favorites)) {
+        const newFavorites = event.data.favorites as FavoriteKey[];
+        queryClient.setQueryData(FAVORITES_QUERY_KEY, newFavorites);
+      }
     };
     return () => bc.close();
-  }, [isFavoritesMode, refetchFavorites]);
+  }, [isFavoritesMode, queryClient]);
 
+  /**
+   * Display error toasts for favorites query failures
+   * Only shows errors in favorites mode where the query is critical
+   */
   React.useEffect(() => {
     if (isFavoritesError && favoritesError instanceof Error) {
       if (/(rate limit|429)/i.test(favoritesError.message)) {
@@ -71,17 +92,27 @@ export function Client({ initialFavoritesData, initialFavoriteKeys }: ClientProp
     }
   }, [isFavoritesError, favoritesError]);
 
+  /**
+   * Convert favorites array to Set for O(1) lookup performance
+   * Used for filtering table data and checking favorite status
+   */
   const favoriteKeys = React.useMemo(() => new Set(favorites as FavoriteKey[]), [favorites]);
 
-  // For favorites mode, track favorites changes to update data optimistically
+  /**
+   * Track filtered favorites data for favorites view
+   * Updates reactively when user favorites/unfavorites items
+   */
   const [favoritesData, setFavoritesData] = React.useState(initialFavoritesData);
 
-  // Update favorites data when initialFavoritesData changes
+  // Update favorites data when initialFavoritesData changes (SSR navigation)
   React.useEffect(() => {
     setFavoritesData(initialFavoritesData);
   }, [initialFavoritesData]);
 
-  // Update favorites data when favorites change (optimistic updates)
+  /**
+   * Reactively filter favorites data based on current favorite keys
+   * Enables instant row removal in favorites view when items are unfavorited
+   */
   React.useEffect(() => {
     if (isFavoritesMode && initialFavoritesData && !isFavoritesError) {
       const updatedFavoritesData = initialFavoritesData.filter(row =>
